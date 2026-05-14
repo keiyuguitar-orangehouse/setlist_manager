@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>セトリ管理アプリ | バンドマン・セッションミュージシャン向け</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic','Noto Sans JP',sans-serif;background:#f8f8f6;color:#1a1a1a;line-height:1.7;}
+
+/* ヘッダー */
+.hero{background:linear-gradient(135deg,#0a1a14 0%,#0f3024 60%,#1a4a34 100%);padding:64px 24px 56px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(93,202,165,.08) 0%,transparent 60%),radial-gradient(ellipse at 70% 30%,rgba(239,159,39,.06) 0%,transparent 50%);pointer-events:none;}
+.hero-icon{font-size:52px;margin-bottom:16px;display:block;}
+.hero h1{font-size:clamp(22px,5vw,36px);font-weight:700;color:#f0f0f0;margin-bottom:10px;letter-spacing:-.02em;}
+.hero-sub{font-size:clamp(13px,2.5vw,16px);color:#5dcaa5;font-weight:500;margin-bottom:8px;}
+.hero-desc{font-size:14px;color:#6a8a7a;max-width:480px;margin:0 auto 32px;}
+
+.dl-btn{display:inline-flex;align-items:center;gap:10px;background:#0f6e56;color:#fff;padding:16px 36px;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none;transition:all .2s;box-shadow:0 4px 20px rgba(15,110,86,.4);}
+.dl-btn:hover{background:#0a5240;transform:translateY(-2px);box-shadow:0 8px 28px rgba(15,110,86,.5);}
+.dl-btn-icon{font-size:20px;}
+.dl-note{font-size:12px;color:#4a6a5a;margin-top:12px;}
+
+/* メインコンテンツ */
+.container{max-width:760px;margin:0 auto;padding:0 20px;}
+
+/* 特徴 */
+.features{padding:56px 0 48px;}
+.section-title{font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:24px;text-align:center;}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
+.feature-card{background:#fff;border:1px solid #e0dfd8;border-radius:14px;padding:20px 18px;}
+.feature-icon{font-size:28px;margin-bottom:10px;display:block;}
+.feature-title{font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:6px;}
+.feature-desc{font-size:13px;color:#666;line-height:1.6;}
+
+/* 使い方 */
+.howto{padding:0 0 56px;}
+.howto-list{display:flex;flex-direction:column;gap:12px;}
+.howto-item{background:#fff;border:1px solid #e0dfd8;border-radius:12px;padding:18px 20px;display:flex;gap:16px;align-items:flex-start;}
+.howto-num{width:32px;height:32px;border-radius:50%;background:#0f6e56;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.howto-content{}
+.howto-title{font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:4px;}
+.howto-desc{font-size:13px;color:#666;line-height:1.6;}
+.howto-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:100px;font-weight:500;margin-right:4px;margin-top:4px;}
+.hb-green{background:#e1f5ee;color:#0f6e56;border:1px solid #5dcaa5;}
+.hb-blue{background:#e6f1fb;color:#185fa5;border:1px solid #85b7eb;}
+.hb-dark{background:#1a3a5c;color:#fff;}
+
+/* PDF説明 */
+.pdf-section{padding:0 0 56px;}
+.pdf-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.pdf-card{border-radius:14px;padding:22px 20px;}
+.pdf-card-1{background:#f0faf6;border:1px solid #5dcaa5;}
+.pdf-card-2{background:#f0f4ff;border:1px solid #85b7eb;}
+.pdf-card-title{font-size:14px;font-weight:700;margin-bottom:10px;}
+.pdf-card-1 .pdf-card-title{color:#0f6e56;}
+.pdf-card-2 .pdf-card-title{color:#1a3a5c;}
+.pdf-card-list{font-size:13px;color:#555;line-height:1.8;}
+.pdf-card-list li{list-style:none;padding-left:0;}
+.pdf-card-list li::before{content:'✓ ';color:#0f6e56;}
+.pdf-card-2 .pdf-card-list li::before{color:#185fa5;}
+
+/* 動作環境 */
+.env-section{padding:0 0 56px;}
+.env-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
+.env-card{background:#fff;border:1px solid #e0dfd8;border-radius:10px;padding:14px 16px;text-align:center;}
+.env-icon{font-size:24px;margin-bottom:6px;display:block;}
+.env-name{font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:2px;}
+.env-desc{font-size:11px;color:#888;}
+
+/* FAQ */
+.faq-section{padding:0 0 56px;}
+.faq-item{background:#fff;border:1px solid #e0dfd8;border-radius:12px;margin-bottom:10px;overflow:hidden;}
+.faq-q{padding:16px 20px;font-size:14px;font-weight:600;color:#1a1a1a;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;}
+.faq-q::after{content:'＋';font-size:18px;color:#aaa;transition:transform .2s;}
+.faq-item.open .faq-q::after{content:'－';}
+.faq-a{display:none;padding:0 20px 16px;font-size:13px;color:#555;line-height:1.8;border-top:1px solid #f0efe8;}
+.faq-item.open .faq-a{display:block;}
+
+/* フッター */
+footer{background:#0a1a14;color:#4a6a5a;text-align:center;padding:32px 20px;font-size:13px;}
+footer a{color:#5dcaa5;text-decoration:none;}
+
+/* ダウンロードボタン（下部固定） */
+.dl-bottom{text-align:center;padding:48px 20px 56px;background:linear-gradient(to bottom,#f8f8f6,#eef5f1);}
+.dl-bottom-title{font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:6px;}
+.dl-bottom-sub{font-size:13px;color:#888;margin-bottom:24px;}
+
+@media(max-width:540px){
+  .pdf-cards{grid-template-columns:1fr;}
+  .hero{padding:48px 20px 44px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ヒーロー -->
+<div class="hero">
+  <span class="hero-icon">🎸</span>
+  <h1>セトリ管理アプリ</h1>
+  <div class="hero-sub">バンドマン・セッションミュージシャン向け</div>
+  <div class="hero-desc">セットリストの作成からPDF出力まで、ライブ準備をひとつのファイルで完結。インストール不要・無料。</div>
+  <a href="setlist_manager.html" download class="dl-btn">
+    <span class="dl-btn-icon">⬇</span> 無料ダウンロード
+  </a>
+  <div class="dl-note">HTMLファイル 1つ（約46KB）・インターネット不要</div>
+</div>
+
+<div class="container">
+
+  <!-- 特徴 -->
+  <section class="features">
+    <div class="section-title">✨ 特徴</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">📱</span>
+        <div class="feature-title">インストール不要</div>
+        <div class="feature-desc">ダウンロードしたHTMLファイルをブラウザで開くだけ。アプリのインストールは一切不要です。</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔒</span>
+        <div class="feature-title">オフライン対応</div>
+        <div class="feature-desc">インターネット接続なしで動作します。ライブ当日の会場でも安心。</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💾</span>
+        <div class="feature-title">自動保存</div>
+        <div class="feature-desc">入力したデータはブラウザに自動保存。次回開いたときもそのまま続きから。新しいライブのセトリを作るときはアプリ右上の🗑リセットボタンで全項目をリセットできます。</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📄</span>
+        <div class="feature-title">PDF出力</div>
+        <div class="feature-desc">メンバー用・スタッフ用の2種類のPDFを印刷機能で出力できます。</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🎵</span>
+        <div class="feature-title">詳細な曲情報</div>
+        <div class="feature-desc">曲名・Key・BPM・演奏時間・ソロ担当者を曲ごとに管理できます。</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🕐</span>
+        <div class="feature-title">時間管理</div>
+        <div class="feature-desc">ステージ持ち時間と合計時間をリアルタイムで比較。過不足をバーで確認できます。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 使い方 -->
+  <section class="howto">
+    <div class="section-title">📖 使い方</div>
+    <div class="howto-list">
+      <div class="howto-item">
+        <div class="howto-num">1</div>
+        <div class="howto-content">
+          <div class="howto-title">ファイルをダウンロードして開く</div>
+          <div class="howto-desc">上のボタンからHTMLファイルをダウンロード。ダブルクリックすればブラウザで開きます。Chrome・Safari・Firefoxいずれも対応。</div>
+        </div>
+      </div>
+      <div class="howto-item">
+        <div class="howto-num">2</div>
+        <div class="howto-content">
+          <div class="howto-title">ライブ情報を入力する</div>
+          <div class="howto-desc">日付・会場・アーティスト名を入力。ステージの持ち時間を設定すると過不足バーが表示されます。</div>
+        </div>
+      </div>
+      <div class="howto-item">
+        <div class="howto-num">3</div>
+        <div class="howto-content">
+          <div class="howto-title">曲を入力・編集する</div>
+          <div class="howto-desc">「✏ 編集」ボタンで各曲の詳細を入力。曲名・Key・BPM・演奏時間・ソロ担当者・スタッフへの要望を設定できます。⠿ マークをドラッグすれば並び替えもできます。</div>
+        </div>
+      </div>
+      <div class="howto-item">
+        <div class="howto-num">4</div>
+        <div class="howto-content">
+          <div class="howto-title">MCを挿入する</div>
+          <div class="howto-desc">「💬 MCを挿入」ボタンで末尾にMCを追加。ドラッグで位置を調整し、編集ボタンでメンバー向け・スタッフ向けそれぞれのメモを入力できます。</div>
+        </div>
+      </div>
+      <div class="howto-item">
+        <div class="howto-num">5</div>
+        <div class="howto-content">
+          <div class="howto-title">PDFで出力する</div>
+          <div class="howto-desc">
+            タイプを選んで「印刷 / PDF保存」ボタンを押す。印刷ダイアログで「PDFに保存」を選択するとPDFが作成されます。<br>
+            <span class="howto-badge hb-green">👥 メンバー用</span> 曲順・Key・BPM・ソロ担当<br>
+            <span class="howto-badge hb-dark">🎛 スタッフ用</span> BPM・ソロ担当・時間・要望・メンバー一覧
+          </div>
+        </div>
+      </div>
+      <div class="howto-item">
+        <div class="howto-num">6</div>
+        <div class="howto-content">
+          <div class="howto-title">メンバーを管理する</div>
+          <div class="howto-desc">「👥 メンバー」タブでバンドメンバーの名前と担当楽器を管理。スタッフ用PDFのメンバー一覧に自動反映されます。</div>
+        </div>
+      </div>
+      <div class="howto-item">
+        <div class="howto-num">7</div>
+        <div class="howto-content">
+          <div class="howto-title">履歴から復元する</div>
+          <div class="howto-desc">PDFを出力するたびに「🕐 履歴」タブに自動記録。過去のセトリをいつでも復元できます。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PDF詳細 -->
+  <section class="pdf-section">
+    <div class="section-title">📄 PDF出力の2タイプ</div>
+    <div class="pdf-cards">
+      <div class="pdf-card pdf-card-1">
+        <div class="pdf-card-title">👥 メンバー用</div>
+        <ul class="pdf-card-list">
+          <li>曲番号・曲名</li>
+          <li>Key・BPM</li>
+          <li>ソロ担当者</li>
+          <li>MC（メンバー向けメモ）</li>
+        </ul>
+      </div>
+      <div class="pdf-card pdf-card-2">
+        <div class="pdf-card-title">🎛 スタッフ用</div>
+        <ul class="pdf-card-list">
+          <li>曲番号・曲名</li>
+          <li>BPM・演奏時間</li>
+          <li>ソロ担当者</li>
+          <li>PA・照明・その他の要望</li>
+          <li>MC（スタッフ向けメモ）</li>
+          <li>メンバー一覧（担当楽器付き）</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 動作環境 -->
+  <section class="env-section">
+    <div class="section-title">💻 動作環境</div>
+    <div class="env-grid">
+      <div class="env-card">
+        <span class="env-icon">🖥</span>
+        <div class="env-name">Mac / Windows</div>
+        <div class="env-desc">Chrome・Safari・Firefox</div>
+      </div>
+      <div class="env-card">
+        <span class="env-icon">📱</span>
+        <div class="env-name">iPhone / iPad</div>
+        <div class="env-desc">Safari推奨</div>
+      </div>
+      <div class="env-card">
+        <span class="env-icon">🤖</span>
+        <div class="env-name">Android</div>
+        <div class="env-desc">Chrome推奨</div>
+      </div>
+      <div class="env-card">
+        <span class="env-icon">✈️</span>
+        <div class="env-name">オフライン</div>
+        <div class="env-desc">通信不要で動作</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- スマホでホーム画面に追加 -->
+  <section style="padding:0 0 56px;">
+    <div class="section-title">📲 スマホでアプリのように使う</div>
+    <div style="background:#fff;border:1px solid #e0dfd8;border-radius:14px;padding:24px 20px;">
+      <div style="font-size:13px;color:#555;line-height:1.8;margin-bottom:24px;">
+        ホーム画面に追加すると、まるでアプリのように起動できます。オフラインでも動作するのでライブ当日も安心です。
+      </div>
+
+      <!-- iPhone -->
+      <div style="margin-bottom:28px;">
+        <div style="font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:14px;">📱 iPhone / iPad の場合</div>
+
+        <div style="background:#fff8e1;border:1px solid #f6cc5a;border-radius:10px;padding:12px 14px;font-size:13px;color:#7a5c00;margin-bottom:16px;line-height:1.7;">
+          ⚠️ <strong>LINEやInstagramのアプリ内ブラウザでは登録できません。</strong><br>
+          必ず <strong>Safari</strong> で開いてください。
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <div style="min-width:28px;height:28px;border-radius:50%;background:#0f6e56;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;">1</div>
+            <div style="font-size:13px;color:#333;line-height:1.7;padding-top:4px;">
+              LINEなどでこのページのURLが届いた場合、<strong>右上または右下の「…（三点）」をタップ</strong>して<br>
+              「<strong>ブラウザで開く</strong>」または「<strong>Safariで開く</strong>」を選択してください。
+              <div style="margin-top:6px;padding:8px 12px;background:#f5f5f3;border-radius:8px;font-size:12px;color:#888;">
+                💡 アプリ内に表示された小さなブラウザではなく、Safariのアプリで開くのがポイントです
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <div style="min-width:28px;height:28px;border-radius:50%;background:#0f6e56;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;">2</div>
+            <div style="font-size:13px;color:#333;line-height:1.7;padding-top:4px;">
+              Safariで開いたら、画面下中央の <strong>□↑（四角から上矢印）ボタン</strong> をタップ
+              <div style="margin-top:6px;padding:8px 12px;background:#f5f5f3;border-radius:8px;font-size:12px;color:#888;">
+                💡 これが「共有ボタン」です。画面を少し下にスクロールすると出てくる場合もあります
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <div style="min-width:28px;height:28px;border-radius:50%;background:#0f6e56;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;">3</div>
+            <div style="font-size:13px;color:#333;line-height:1.7;padding-top:4px;">
+              メニューが開いたら下にスクロールして <strong>「ホーム画面に追加」</strong> をタップ
+            </div>
+          </div>
+
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <div style="min-width:28px;height:28px;border-radius:50%;background:#0f6e56;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;">4</div>
+            <div style="font-size:13px;color:#333;line-height:1.7;padding-top:4px;">
+              名前を確認して右上の <strong>「追加」</strong> をタップ
+              <div style="margin-top:6px;padding:8px 12px;background:#e1f5ee;border-radius:8px;font-size:12px;color:#0f6e56;border:1px solid #5dcaa5;">
+                🎉 ホーム画面にアイコンが追加されます！次回からはそこからすぐ起動できます
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Android -->
+      <div style="border-top:1px solid #f0efe8;padding-top:24px;">
+        <div style="font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:14px;">🤖 Android の場合</div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <div style="min-width:28px;height:28px;border-radius:50%;background:#185fa5;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;">1</div>
+            <div style="font-size:13px;color:#333;line-height:1.7;padding-top:4px;">
+              LINEなどのアプリ内ブラウザで開いた場合は、<strong>右上の「…（三点）」→「ブラウザで開く」</strong> を選択して <strong>Chrome</strong> で開く
+            </div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <div style="min-width:28px;height:28px;border-radius:50%;background:#185fa5;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;">2</div>
+            <div style="font-size:13px;color:#333;line-height:1.7;padding-top:4px;">
+              右上の <strong>⋮（三点メニュー）</strong> をタップ → <strong>「ホーム画面に追加」</strong> をタップ
+            </div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <div style="min-width:28px;height:28px;border-radius:50%;background:#185fa5;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;">3</div>
+            <div style="font-size:13px;color:#333;line-height:1.7;padding-top:4px;">
+              「<strong>追加</strong>」をタップ
+              <div style="margin-top:6px;padding:8px 12px;background:#e6f1fb;border-radius:8px;font-size:12px;color:#185fa5;border:1px solid #85b7eb;">
+                🎉 ホーム画面にアイコンが追加されます！
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq-section">
+    <div class="section-title">❓ よくある質問</div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">データはどこに保存されますか？</div>
+      <div class="faq-a">ブラウザのlocalStorageという領域に自動保存されます。クラウドやサーバーには送信されません。次回開いたときも前回の続きから使えます。新しいライブのセトリを作るときはアプリ右上の「🗑 リセット」ボタンで全項目をリセットできます。なお、ブラウザのデータを削除するとデータも消えるのでご注意ください。</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">プリンターがなくてもPDFにできますか？</div>
+      <div class="faq-a">できます。印刷ダイアログで「送信先」や「プリンター」を「PDFに保存」に変更するだけでPDFファイルとして保存できます。プリンターは不要です。iPhoneの場合は共有ボタン→プリント→プレビューをピンチアウトでPDF保存できます。</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">複数のデバイスでデータを共有できますか？</div>
+      <div class="faq-a">現在のバージョンではデバイス間のリアルタイム共有には対応していません。PDFを出力してLINEやメールで送る方法が最も手軽です。Macで作成したセトリを携帯で見たい場合はAirDropやGoogle Driveでファイルを転送してください。</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">無料で使えますか？</div>
+      <div class="faq-a">完全無料です。登録不要・広告なしでお使いいただけます。</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">曲数に制限はありますか？</div>
+      <div class="faq-a">1〜30曲まで設定できます。MCは何個でも挿入可能です。</div>
+    </div>
+  </section>
+
+</div>
+
+<!-- 下部ダウンロード -->
+<div class="dl-bottom">
+  <div class="dl-bottom-title">さっそく使ってみましょう</div>
+  <div class="dl-bottom-sub">ダウンロードしてブラウザで開くだけ。登録不要・無料</div>
+  <a href="setlist_manager.html" download class="dl-btn">
+    <span class="dl-btn-icon">⬇</span> 無料ダウンロード
+  </a>
+</div>
+
+<footer>
+  <div style="margin-bottom:6px;">🎸 セトリ管理アプリ</div>
+  <div>バンドマン・セッションミュージシャンのために作られたツールです</div>
+</footer>
+
+<script>
+function toggleFaq(el){el.classList.toggle('open');}
+</script>
+</body>
+</html>

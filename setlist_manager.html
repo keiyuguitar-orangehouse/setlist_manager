@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>セトリ管理アプリ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic','Noto Sans JP',sans-serif;background:#f5f5f3;color:#1a1a1a;font-size:14px;line-height:1.5;}
+input,select,textarea,button{font-family:inherit;font-size:inherit;}
+input[type="text"],input[type="number"],input[type="date"],select,textarea{border:1px solid #d0cfc8;border-radius:8px;padding:6px 10px;background:#fff;outline:none;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:#0f6e56;box-shadow:0 0 0 2px rgba(15,110,86,.12);}
+button{cursor:pointer;border:none;background:none;}
+.app{max-width:680px;margin:0 auto;padding:16px 16px 60px;}
+
+.tabs{display:flex;gap:4px;padding:0 0 14px;border-bottom:1px solid #e0dfd8;margin-bottom:14px;flex-wrap:wrap;}
+.tab{padding:6px 13px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid transparent;background:transparent;color:#888;transition:all .15s;}
+.tab.active{background:#fff;border-color:#d0cfc8;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.tab:hover:not(.active){background:#eeedea;}
+
+.live-info-bar{background:#fff;border:1px solid #e0dfd8;border-radius:12px;padding:10px 14px;margin-bottom:10px;}
+.live-info-inner{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.live-info-field{display:flex;flex-direction:column;gap:3px;}
+.live-info-label{font-size:11px;color:#888;}
+.live-info-field input{font-size:12px;padding:4px 8px;}
+
+.stage-time-bar{background:#fff;border:1px solid #e0dfd8;border-radius:12px;padding:10px 14px;margin-bottom:10px;}
+.stage-time-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.stage-time-label{font-size:12px;color:#555;white-space:nowrap;flex-shrink:0;}
+.stage-time-inputs{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.stage-time-inputs input{width:52px;font-size:13px;font-weight:500;text-align:center;padding:4px 6px;}
+.stage-time-inputs span{font-size:12px;color:#888;}
+.diff-inline{display:flex;align-items:center;gap:8px;flex:1;min-width:160px;}
+.progress-wrap{flex:1;height:5px;background:#e8e7e3;border-radius:100px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:100px;transition:width .3s,background .3s;background:#378add;}
+.diff-badge{font-size:12px;font-weight:500;padding:2px 9px;border-radius:100px;white-space:nowrap;background:#e8e7e3;color:#888;}
+.diff-over{background:#fee2e2;color:#dc2626;}
+.diff-short{background:#fef3c7;color:#d97706;}
+.diff-perfect{background:#d1fae5;color:#059669;}
+
+.header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;flex-wrap:wrap;gap:8px;}
+.setlist-title{font-size:17px;font-weight:600;}
+.total-sub{font-size:12px;color:#888;margin-top:1px;}
+.count-ctrl{display:flex;align-items:center;border:1px solid #d0cfc8;border-radius:8px;overflow:hidden;}
+.count-btn{background:#fff;border:none;width:34px;height:30px;font-size:18px;cursor:pointer;color:#888;display:flex;align-items:center;justify-content:center;transition:all .12s;}
+.count-btn:hover{background:#eeedea;color:#1a1a1a;}
+.count-btn:disabled{opacity:.3;cursor:not-allowed;}
+.count-display{font-size:13px;font-weight:500;padding:0 10px;border-left:1px solid #e0dfd8;border-right:1px solid #e0dfd8;height:30px;display:flex;align-items:center;gap:4px;background:#f5f5f3;}
+
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:.7rem;flex-wrap:wrap;}
+.mc-insert-btn{font-size:12px;padding:5px 13px;border-radius:8px;border:1px solid #d0cfc8;background:#fff;color:#555;cursor:pointer;transition:all .12s;}
+.mc-insert-btn:hover{background:#eeedea;}
+.mc-insert-hint{font-size:11px;color:#aaa;font-style:italic;}
+.help-tip{font-size:12px;color:#aaa;margin-bottom:.7rem;}
+
+.song-list{display:flex;flex-direction:column;gap:6px;}
+.song-item{background:#fff;border:1px solid #e0dfd8;border-radius:12px;padding:10px 12px;display:flex;align-items:flex-start;gap:10px;transition:border-color .15s,box-shadow .15s;cursor:pointer;}
+.song-item:hover{border-color:#b0afa8;}
+.song-item.selected{border-color:#0f6e56;box-shadow:0 0 0 2px rgba(15,110,86,.12);}
+.song-item.mc-item{border-left:3px solid #aaa;border-radius:0 12px 12px 0;}
+.song-item.dragging{opacity:.35;}
+.song-item.drag-over{border-color:#3b82f6;background:#eff6ff;}
+.song-item.placeholder{border-style:dashed;background:#f9f9f7;opacity:.6;}
+.drag-handle{color:#ccc;font-size:16px;cursor:grab;flex-shrink:0;padding-top:2px;user-select:none;}
+.song-num{font-size:12px;color:#aaa;min-width:18px;text-align:right;flex-shrink:0;padding-top:2px;}
+.song-info{flex:1;min-width:0;}
+.view-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.song-name-text{font-size:14px;font-weight:500;}
+.song-name-empty{font-size:14px;color:#aaa;font-style:italic;}
+.badge{font-size:11px;padding:2px 7px;border-radius:100px;font-weight:500;background:#f0efe8;color:#666;border:1px solid #e0dfd8;}
+.edit-hint{font-size:11px;color:#aaa;opacity:0;transition:opacity .15s;}
+.song-item:hover .edit-hint{opacity:1;}
+.solo-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
+.solo-tag{font-size:11px;padding:2px 8px;border-radius:100px;border:1px solid;font-weight:500;}
+.s-guitar{background:#e1f5ee;color:#0f6e56;border-color:#5dcaa5;}
+.s-bass{background:#e6f1fb;color:#185fa5;border-color:#85b7eb;}
+.s-piano{background:#fbeaf0;color:#993556;border-color:#ed93b1;}
+.s-keys{background:#faeeda;color:#854f0b;border-color:#ef9f27;}
+.s-drums{background:#f1efe8;color:#5f5e5a;border-color:#b4b2a9;}
+.s-tp{background:#eeedfe;color:#534ab7;border-color:#afa9ec;}
+.s-tb{background:#faece7;color:#993c1d;border-color:#f0997b;}
+.s-sax-a{background:#eaf3de;color:#3b6d11;border-color:#97c459;}
+.s-sax-t{background:#eaf3de;color:#27500a;border-color:#639922;}
+.s-sax-b{background:#eaf3de;color:#173404;border-color:#3b6d11;}
+.s-other{background:#fcebeb;color:#a32d2d;border-color:#f09595;}
+.memo-tags{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;}
+.memo-tag{font-size:11px;padding:2px 8px;border-radius:100px;border:1px solid;font-weight:500;}
+.mt-pa{background:#e6f1fb;color:#185fa5;border-color:#85b7eb;}
+.mt-light{background:#faeeda;color:#854f0b;border-color:#ef9f27;}
+.mt-other{background:#f1efe8;color:#5f5e5a;border-color:#b4b2a9;}
+
+.edit-mode{display:none;flex-direction:column;gap:10px;}
+.edit-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.edit-mode input[type="text"]{flex:1;min-width:100px;}
+.edit-section-label{font-size:11px;color:#888;font-weight:500;letter-spacing:.06em;margin-bottom:4px;}
+.solo-checkboxes{display:flex;flex-wrap:wrap;gap:6px;}
+.scb{display:inline-flex;align-items:center;font-size:12px;cursor:pointer;padding:5px 10px;border-radius:100px;border:1px solid #d0cfc8;background:#f5f5f3;color:#666;font-family:inherit;transition:all .1s;}
+.scb:hover{border-color:#aaa;}
+.other-input-wrap{margin-top:6px;display:none;}
+.other-input-wrap.visible{display:block;}
+.memo-section{display:flex;flex-direction:column;gap:6px;}
+.memo-toggle-row{display:flex;gap:6px;flex-wrap:wrap;}
+.memo-toggle-btn{font-size:12px;padding:5px 12px;border-radius:8px;border:1px solid #d0cfc8;background:#fff;color:#888;cursor:pointer;transition:all .12s;}
+.memo-toggle-btn:hover{background:#f5f5f3;}
+.memo-toggle-btn.ap{background:#e6f1fb;color:#185fa5;border-color:#85b7eb;}
+.memo-toggle-btn.al{background:#faeeda;color:#854f0b;border-color:#ef9f27;}
+.memo-toggle-btn.ao{background:#f1efe8;color:#5f5e5a;border-color:#b4b2a9;}
+.memo-field{display:none;flex-direction:column;gap:4px;}
+.memo-field.visible{display:flex;}
+.memo-field-label{font-size:11px;font-weight:500;color:#555;}
+.memo-field textarea{font-size:13px;resize:vertical;min-height:60px;line-height:1.5;}
+.hr-div{border:none;border-top:1px solid #e8e7e3;margin:4px 0;}
+.edit-actions{display:flex;gap:6px;}
+.save-btn{font-size:12px;padding:5px 14px;background:#fff;border:1px solid #d0cfc8;border-radius:8px;cursor:pointer;}
+.save-btn:hover{background:#f5f5f3;}
+.cancel-btn{font-size:12px;padding:5px 12px;background:transparent;border:none;border-radius:8px;cursor:pointer;color:#888;}
+.cancel-btn:hover{background:#f0efe8;}
+.dur-select{font-size:13px;width:110px;}
+.right-col{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.song-duration{font-size:13px;color:#888;font-variant-numeric:tabular-nums;}
+.edit-btn{background:none;border:1px solid #d0cfc8;color:#555;font-size:13px;cursor:pointer;padding:3px 8px;border-radius:6px;opacity:1;transition:all .15s;font-family:inherit;}
+.inline-edit-btn{font-size:12px;padding:3px 10px;border-radius:6px;border:1px solid #0f6e56;background:#e8f5f1;color:#0f6e56;cursor:pointer;font-weight:500;font-family:inherit;transition:all .15s;flex-shrink:0;}
+.inline-edit-btn:hover{background:#0f6e56;color:#fff;}
+.edit-btn:hover{background:#0f6e56;color:#fff;border-color:#0f6e56;}
+.edit-btn:hover{color:#1a1a1a;background:#f0efe8;}
+.delete-btn{background:none;border:1px solid #d0cfc8;color:#aaa;font-size:11px;font-weight:500;cursor:pointer;padding:3px 8px;border-radius:6px;transition:all .15s;font-family:inherit;white-space:nowrap;}
+.delete-btn:hover{color:#dc2626;background:#fee2e2;border-color:#fca5a5;}
+
+.total-bar{margin-top:10px;background:#fff;border:1px solid #e0dfd8;border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.total-bar-time{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;}
+.total-breakdown{font-size:12px;color:#aaa;display:flex;gap:12px;flex-wrap:wrap;margin-top:2px;}
+
+.pdf-bar{margin-top:10px;background:#f5f5f3;border:1px solid #e0dfd8;border-radius:12px;padding:14px 16px;}
+.pdf-bar-title{font-size:11px;color:#888;margin-bottom:10px;font-weight:500;}
+.pdf-type-select{display:flex;gap:0;border:1px solid #d0cfc8;border-radius:10px;overflow:hidden;margin-bottom:12px;}
+.pdf-type-btn{flex:1;padding:10px 12px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:#fff;color:#888;transition:all .15s;text-align:center;border-right:1px solid #d0cfc8;}
+.pdf-type-btn:last-child{border-right:none;}
+.pdf-type-btn:hover:not(.selected-type){background:#f5f5f3;color:#555;}
+.pdf-type-btn.selected-type{background:#0f6e56;color:#fff;}
+.pdf-type-desc{font-size:12px;color:#888;margin-bottom:12px;padding:8px 10px;background:#fff;border-radius:8px;border:1px solid #e8e7e3;line-height:1.6;}
+.pdf-go-btn{width:100%;padding:11px;font-size:14px;font-weight:600;border-radius:8px;border:none;background:#1a3a5c;color:#fff;cursor:pointer;transition:all .15s;}
+.pdf-go-btn:hover{background:#122840;}
+.save-indicator{font-size:11px;color:#aaa;margin-top:8px;}
+
+.history-empty{text-align:center;padding:2.5rem;color:#aaa;font-size:14px;}
+.history-item{background:#fff;border:1px solid #e0dfd8;border-radius:12px;padding:14px 16px;margin-bottom:8px;}
+.history-song-row{display:flex;align-items:center;gap:8px;font-size:12px;padding:3px 0;border-bottom:1px solid #f0efe8;}
+.history-song-row:last-child{border-bottom:none;}
+.history-song-num{font-size:11px;color:#aaa;min-width:16px;}
+.history-song-name{flex:1;}
+.history-song-mc{flex:1;color:#aaa;font-style:italic;}
+.history-song-dur{font-size:11px;color:#aaa;font-variant-numeric:tabular-nums;}
+.history-restore-btn{font-size:11px;padding:3px 10px;border:1px solid #d0cfc8;border-radius:6px;background:transparent;color:#666;cursor:pointer;}
+.history-del-btn{font-size:12px;padding:3px 6px;border:none;border-radius:6px;background:transparent;color:#ccc;cursor:pointer;}
+.history-del-btn:hover{color:#dc2626;background:#fee2e2;}
+
+.member-row{background:#fff;border:1px solid #e0dfd8;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:6px;max-width:400px;}
+.member-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+.member-del-btn{background:none;border:none;color:#ccc;cursor:pointer;font-size:14px;padding:4px;border-radius:6px;margin-left:auto;}
+.member-del-btn:hover{color:#dc2626;background:#fee2e2;}
+.add-member-row{display:flex;gap:6px;flex-wrap:wrap;max-width:400px;}
+.add-member-row input{flex:1;min-width:100px;}
+.add-btn{font-size:13px;padding:6px 14px;border-radius:8px;border:1px solid #d0cfc8;background:#fff;cursor:pointer;white-space:nowrap;}
+.add-btn:hover{background:#f5f5f3;}
+
+.print-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;}
+.print-overlay.visible{display:flex;}
+.print-box{background:#fff;border-radius:14px;padding:28px 32px;max-width:460px;width:90%;text-align:center;}
+.print-box h3{font-size:16px;font-weight:600;margin-bottom:10px;}
+.print-box p{font-size:13px;color:#555;line-height:1.8;margin-bottom:20px;white-space:pre-line;}
+.print-box-btns{display:flex;gap:10px;justify-content:center;}
+.print-go-btn{font-size:13px;padding:9px 20px;border-radius:8px;border:1px solid #0f6e56;background:#0f6e56;color:#fff;cursor:pointer;font-weight:500;}
+.print-go-btn:hover{background:#085041;}
+.print-cancel-btn{font-size:13px;padding:9px 20px;border-radius:8px;border:1px solid #d0cfc8;background:#fff;color:#555;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="tabs" style="justify-content:space-between;align-items:center;">
+    <div style="display:flex;gap:4px;flex-wrap:wrap;">
+      <button class="tab active" onclick="switchTab('edit')">📋 セトリ編集</button>
+      <button class="tab" onclick="switchTab('share')">👥 メンバー</button>
+      <button class="tab" onclick="switchTab('history')">🕐 履歴<span id="history-badge" style="font-size:10px;background:#dbeafe;color:#1d4ed8;padding:1px 6px;border-radius:100px;margin-left:4px;display:none;">0</span></button>
+    </div>
+    <button type="button" onclick="resetAll()" style="font-size:11px;padding:5px 12px;border-radius:7px;border:1px solid #d0cfc8;background:#fff;color:#aaa;cursor:pointer;transition:all .15s;white-space:nowrap;" onmouseover="this.style.color='#dc2626';this.style.borderColor='#fca5a5';this.style.background='#fee2e2';" onmouseout="this.style.color='#aaa';this.style.borderColor='#d0cfc8';this.style.background='#fff';">🗑 リセット</button>
+  </div>
+
+  <!-- セトリ編集 -->
+  <div id="tab-edit">
+    <div class="live-info-bar">
+      <div class="live-info-inner">
+        <div class="live-info-field">
+          <div class="live-info-label">📅 日付</div>
+          <input type="date" id="live-date" oninput="updateTitle();autosave()" />
+        </div>
+        <div class="live-info-field">
+          <div class="live-info-label">🏛 会場</div>
+          <input type="text" id="live-venue" placeholder="渋谷duo" oninput="updateTitle();autosave()" />
+        </div>
+        <div class="live-info-field">
+          <div class="live-info-label">🎤 アーティスト</div>
+          <input type="text" id="live-artist" placeholder="Band Name" oninput="updateTitle();autosave()" />
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-time-bar">
+      <div class="stage-time-row">
+        <div class="stage-time-label">⏱ 持ち時間</div>
+        <div class="stage-time-inputs">
+          <input type="number" id="allot-min" value="45" min="1" max="300" oninput="renderDiff();autosave()" />
+          <span>分</span>
+          <input type="number" id="allot-sec" value="0" min="0" max="59" step="15" oninput="clampAllocSec();renderDiff();autosave()" />
+          <span>秒</span>
+        </div>
+        <div class="diff-inline">
+          <div class="progress-wrap"><div class="progress-fill" id="progress-fill"></div></div>
+          <div class="diff-badge" id="diff-badge">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-row">
+      <div>
+        <div class="setlist-title" id="setlist-title-display">🎸 セットリスト</div>
+        <div class="total-sub" id="total-display"></div>
+      </div>
+      <div class="count-ctrl">
+        <button class="count-btn" id="btn-minus" onclick="removeSongSlot()">−</button>
+        <div class="count-display">♩ <span id="count-num">7</span> 曲</div>
+        <button class="count-btn" id="btn-plus" onclick="addSongSlot()">+</button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button type="button" class="mc-insert-btn" onclick="addMC()">💬 MCを挿入</button>
+      <span class="mc-insert-hint" id="mc-hint">選択中の曲の下 / 未選択なら末尾</span>
+    </div>
+    <div class="help-tip">✏ ボタンで編集　⠿ をドラッグで並び替え</div>
+
+    <div class="song-list" id="song-list"></div>
+
+    <div class="total-bar">
+      <div>
+        <div style="font-size:12px;color:#888;">⏱ トータル時間</div>
+        <div class="total-breakdown" id="total-breakdown"></div>
+      </div>
+      <div class="total-bar-time" id="total-bar-time">0:00</div>
+    </div>
+
+    <div class="pdf-bar">
+      <div class="pdf-bar-title">📄 印刷 / PDF保存</div>
+      <div class="pdf-type-select">
+        <button type="button" class="pdf-type-btn selected-type" id="pdf-type-btn-1" onclick="selectPdfType(1)">
+          👥 メンバー用<br><span style="font-size:11px;font-weight:400;">曲順 + ソロ担当</span>
+        </button>
+        <button type="button" class="pdf-type-btn" id="pdf-type-btn-2" onclick="selectPdfType(2)">
+          🎛 スタッフ用<br><span style="font-size:11px;font-weight:400;">全詳細（要望含む）</span>
+        </button>
+      </div>
+      <div class="pdf-type-desc" id="pdf-type-desc">曲番号・曲名・Key・BPM・ソロ担当を一覧表示します。シンプルなセトリ表として使えます。</div>
+      <button type="button" class="pdf-go-btn" onclick="doPrint()">📄 この内容で印刷 / PDF保存</button>
+      <div style="margin-top:8px;font-size:11px;color:#aaa;line-height:1.7;" id="save-status">
+        💾 データは自動保存されます。次回開いたときも前回の続きから使えます。
+      </div>
+    </div>
+  </div>
+
+  <!-- メンバー -->
+  <div id="tab-share" style="display:none;">
+    <div style="font-size:18px;font-weight:600;margin-bottom:.75rem;">👥 メンバー</div>
+    <div id="member-list"></div>
+    <div class="add-member-row">
+      <input type="text" id="new-member-name" placeholder="名前（例：たかし）" />
+      <input type="text" id="new-member-role" placeholder="パート（Dr）" style="max-width:90px;" />
+      <button type="button" class="add-btn" onclick="addMember()">＋ 追加</button>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:#aaa;max-width:400px;">名前とパートを入力して追加。× で削除。</div>
+  </div>
+
+  <!-- 履歴 -->
+  <div id="tab-history" style="display:none;">
+    <div style="font-size:18px;font-weight:600;margin-bottom:1rem;">🕐 履歴</div>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<!-- 印刷オーバーレイ -->
+<div class="print-overlay" id="print-overlay">
+  <div class="print-box">
+    <h3>📄 PDF保存の手順</h3>
+    <p id="print-box-msg"></p>
+    <div class="print-box-btns">
+      <button class="print-go-btn" onclick="execPrint()">印刷画面を開く</button>
+      <button class="print-cancel-btn" onclick="closePrintOverlay()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ALL_KEYS=['C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab','A','A#','Bb','B','Cm','C#m','Dbm','Dm','D#m','Ebm','Em','Fm','F#m','Gbm','Gm','G#m','Abm','Am','A#m','Bbm','Bm'];
+const SOLOS=[
+  {key:'guitar',label:'Guitar',tag:'s-guitar',on:{bg:'#e1f5ee',cl:'#0f6e56',bc:'#5dcaa5'}},
+  {key:'bass',label:'Bass',tag:'s-bass',on:{bg:'#e6f1fb',cl:'#185fa5',bc:'#85b7eb'}},
+  {key:'piano',label:'Piano',tag:'s-piano',on:{bg:'#fbeaf0',cl:'#993556',bc:'#ed93b1'}},
+  {key:'keys',label:'Keys',tag:'s-keys',on:{bg:'#faeeda',cl:'#854f0b',bc:'#ef9f27'}},
+  {key:'drums',label:'Drums',tag:'s-drums',on:{bg:'#f1efe8',cl:'#5f5e5a',bc:'#b4b2a9'}},
+  {key:'tp',label:'Trumpet',tag:'s-tp',on:{bg:'#eeedfe',cl:'#534ab7',bc:'#afa9ec'}},
+  {key:'tb',label:'Trombone',tag:'s-tb',on:{bg:'#faece7',cl:'#993c1d',bc:'#f0997b'}},
+  {key:'sax-a',label:'Alto Sax',tag:'s-sax-a',on:{bg:'#eaf3de',cl:'#3b6d11',bc:'#97c459'}},
+  {key:'sax-t',label:'Tenor Sax',tag:'s-sax-t',on:{bg:'#eaf3de',cl:'#27500a',bc:'#639922'}},
+  {key:'sax-b',label:'Bari Sax',tag:'s-sax-b',on:{bg:'#eaf3de',cl:'#173404',bc:'#3b6d11'}},
+  {key:'other',label:'Other',tag:'s-other',on:{bg:'#fcebeb',cl:'#a32d2d',bc:'#f09595'}},
+];
+const AVATAR_COLORS=[
+  {bg:'#e1f5ee',cl:'#0f6e56'},{bg:'#e6f1fb',cl:'#185fa5'},{bg:'#faeeda',cl:'#854f0b'},
+  {bg:'#fbeaf0',cl:'#993556'},{bg:'#eeedfe',cl:'#534ab7'},{bg:'#faece7',cl:'#993c1d'},
+];
+const PDF_DESCS={
+  1:'曲番号・曲名・Key・BPM・ソロ担当を一覧表示します。シンプルなセトリ表として使えます。',
+  2:'曲順・ソロ担当に加え、PA・照明・その他の要望もすべて表示します。スタッフ共有用に最適です。'
+};
+
+let currentPdfType=1;
+
+function selectPdfType(type){
+  currentPdfType=type;
+  document.getElementById('pdf-type-btn-1').classList.toggle('selected-type',type===1);
+  document.getElementById('pdf-type-btn-2').classList.toggle('selected-type',type===2);
+  document.getElementById('pdf-type-desc').textContent=PDF_DESCS[type];
+}
+
+function makeKeySelect(sel,id){
+  return '<select id="'+id+'" style="font-size:13px;width:110px;border:1px solid #d0cfc8;border-radius:8px;padding:5px 8px;background:#fff;"><option value="">key</option>'
+    +ALL_KEYS.map(function(k){return '<option value="'+k+'"'+(k===sel?' selected':'')+'>'+k+'</option>';}).join('')+'</select>';
+}
+function makeDurSelect(sel,id,max){
+  max=max||600;var o='';
+  for(var s=15;s<=max;s+=15){var m=Math.floor(s/60),r=s%60;o+='<option value="'+s+'"'+(s===sel?' selected':'')+'>'+(m>0?m+'分'+(r>0?r+'秒':''):r+'秒')+'</option>';}
+  return '<select id="'+id+'" class="dur-select" style="border:1px solid #d0cfc8;border-radius:8px;padding:5px 8px;background:#fff;">'+o+'</select>';
+}
+function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function fmtLong(s){var m=Math.floor(s/60),r=s%60;return m>0?m+'分'+(r>0?' '+r+'秒':''):r+'秒';}
+function nowStr(){var d=new Date();return d.getFullYear()+'/'
+  +String(d.getMonth()+1).padStart(2,'0')+'/'
+  +String(d.getDate()).padStart(2,'0')+' '
+  +String(d.getHours()).padStart(2,'0')+':'
+  +String(d.getMinutes()).padStart(2,'0');}
+function fmtDate(v){if(!v)return'';var p=v.split('-');return p[0]+'.'+p[1]+'.'+p[2];}
+function getAllotSec(){return(parseInt(document.getElementById('allot-min').value)||0)*60+(parseInt(document.getElementById('allot-sec').value)||0);}
+function clampAllocSec(){var el=document.getElementById('allot-sec');var v=Math.round((parseInt(el.value)||0)/15)*15;if(v>=60)v=45;if(v<0)v=0;el.value=v;}
+
+function updateTitle(){
+  var date=fmtDate(document.getElementById('live-date').value);
+  var venue=document.getElementById('live-venue').value.trim();
+  var artist=document.getElementById('live-artist').value.trim();
+  var parts=[artist,date,venue].filter(Boolean);
+  document.getElementById('setlist-title-display').textContent='🎸 '+(parts.join(' / ')||'セットリスト');
+}
+
+function autosave(){
+  try{
+    localStorage.setItem('sl_songs_v1778556279',JSON.stringify(songs));
+    localStorage.setItem('sl_date_v1778556279',document.getElementById('live-date').value);
+    localStorage.setItem('sl_venue_v1778556279',document.getElementById('live-venue').value);
+    localStorage.setItem('sl_artist_v1778556279',document.getElementById('live-artist').value);
+    localStorage.setItem('sl_allot_min_v1778556279',document.getElementById('allot-min').value);
+    localStorage.setItem('sl_allot_sec_v1778556279',document.getElementById('allot-sec').value);
+    localStorage.setItem('sl_history_v1778556279',JSON.stringify(historyList));
+    localStorage.setItem('sl_members_v1778556279',JSON.stringify(members));
+    document.getElementById('save-status').textContent='💾 最終保存: '+nowStr();
+  }catch(e){}
+}
+function loadSaved(){
+  try{
+    var s=localStorage.getItem('sl_songs_v1778556279');if(s)songs=JSON.parse(s);
+    var d=localStorage.getItem('sl_date_v1778556279');if(d)document.getElementById('live-date').value=d;
+    var v=localStorage.getItem('sl_venue_v1778556279');if(v)document.getElementById('live-venue').value=v;
+    var a=localStorage.getItem('sl_artist_v1778556279');if(a)document.getElementById('live-artist').value=a;
+    var am=localStorage.getItem('sl_allot_min_v1778556279');if(am)document.getElementById('allot-min').value=am;
+    var as2=localStorage.getItem('sl_allot_sec_v1778556279');if(as2)document.getElementById('allot-sec').value=as2;
+    var h=localStorage.getItem('sl_history_v1778556279');if(h)historyList=JSON.parse(h);
+    var mb=localStorage.getItem('sl_members_v1778556279');if(mb)members=JSON.parse(mb);
+    updateTitle();
+  }catch(e){}
+}
+
+function renderDiff(){
+  var allot=getAllotSec(),total=songs.reduce(function(a,x){return a+x.duration;},0),diff=total-allot;
+  var pct=allot>0?Math.min(total/allot*100,100):0;
+  var fill=document.getElementById('progress-fill'),badge=document.getElementById('diff-badge');
+  if(!allot){fill.style.width='0%';badge.textContent='—';badge.className='diff-badge';return;}
+  fill.style.width=pct+'%';
+  if(diff===0){fill.style.background='#059669';badge.textContent='ちょうど！';badge.className='diff-badge diff-perfect';}
+  else if(diff>0){fill.style.background='#dc2626';var m=Math.floor(Math.abs(diff)/60),r=Math.abs(diff)%60;badge.textContent='+'+(m>0?m+'分'+(r>0?r+'秒':''):r+'秒')+' オーバー';badge.className='diff-badge diff-over';}
+  else{fill.style.background=(total/allot)>.85?'#d97706':'#378add';var m2=Math.floor(Math.abs(diff)/60),r2=Math.abs(diff)%60;badge.textContent='-'+(m2>0?m2+'分'+(r2>0?r2+'秒':''):r2+'秒')+' 不足';badge.className='diff-badge diff-short';}
+}
+
+var nextId=1;
+function makeBlank(){return{id:nextId++,name:'',key:'',bpm:null,duration:240,type:'song',solos:[],soloOther:'',pa:'',light:'',memoOther:'',mcMemoMember:'',mcMemoStaff:'',blank:true};}
+var songs=[];
+for(var _i=0;_i<7;_i++)songs.push(makeBlank());
+var historyList=[],dragSrc=null,editingId=null,selectedIdx=null;
+var members=[];
+var memberNextId=1;
+
+function initials(n){return n.slice(0,2).toUpperCase();}
+function avatarStyle(i){var c=AVATAR_COLORS[i%AVATAR_COLORS.length];return 'background:'+c.bg+';color:'+c.cl+';';}
+
+function renderMembers(){
+  var list=document.getElementById('member-list');if(!list)return;
+  list.innerHTML=members.map(function(m,i){
+    return '<div class="member-row">'
+      +'<div class="member-avatar" style="'+avatarStyle(i)+'">'+initials(m.name)+'</div>'
+      +'<div style="flex:1;"><span style="font-size:14px;font-weight:500;">'+m.name+'</span>'
+      +(m.role?' <span style="font-size:11px;color:#aaa;">('+m.role+')</span>':'')+'</div>'
+      +'<button type="button" class="member-del-btn" onclick="deleteMember('+m.id+')">✕</button>'
+      +'</div>';
+  }).join('');
+}
+function addMember(){
+  var nameEl=document.getElementById('new-member-name'),roleEl=document.getElementById('new-member-role');
+  var name=nameEl.value.trim();if(!name)return;
+  members.push({id:memberNextId++,name:name,role:roleEl.value.trim()});
+  nameEl.value='';roleEl.value='';renderMembers();autosave();
+}
+function deleteMember(id){
+  if(!confirm('このメンバーを削除しますか？'))return;
+  members=members.filter(function(m){return m.id!==id;});
+  renderMembers();autosave();
+}
+
+function updateCountUI(){
+  var n=songs.filter(function(x){return x.type==='song';}).length;
+  document.getElementById('count-num').textContent=n;
+  document.getElementById('btn-minus').disabled=n<=1;
+  document.getElementById('btn-plus').disabled=n>=30;
+}
+function addSongSlot(){songs.push(makeBlank());render();autosave();}
+function removeSongSlot(){
+  var idxs=songs.map(function(s,i){return s.type==='song'?i:-1;}).filter(function(i){return i>=0;});
+  if(idxs.length<=1)return;
+  songs.splice(idxs[idxs.length-1],1);
+  if(selectedIdx!=null&&selectedIdx>=songs.length)selectedIdx=null;
+  render();autosave();
+}
+function selectRow(idx){
+  selectedIdx=(selectedIdx===idx)?null:idx;
+  updateMCHint();renderSelectedState();
+}
+function renderSelectedState(){
+  document.querySelectorAll('.song-item').forEach(function(el,i){el.classList.toggle('selected',i===selectedIdx);});
+}
+function updateMCHint(){
+  var h=document.getElementById('mc-hint');if(!h)return;
+  h.textContent='末尾に追加（編集後MCボタンで位置調整可）';
+}
+function addMC(){
+  var mc={id:nextId++,name:'',key:'',bpm:null,duration:60,type:'mc',solos:[],soloOther:'',pa:'',light:'',memoOther:'',mcMemoMember:'',mcMemoStaff:''};
+  if(selectedIdx!=null&&selectedIdx<songs.length){songs.splice(selectedIdx+1,0,mc);selectedIdx=selectedIdx+1;}
+  else{songs.push(mc);selectedIdx=songs.length-1;}
+  render();autosave();
+}
+
+function applyBtnState(btn,isOn,opt){
+  if(isOn){btn.style.background=opt.on.bg;btn.style.color=opt.on.cl;btn.style.borderColor=opt.on.bc;}
+  else{btn.style.background='';btn.style.color='';btn.style.borderColor='';}
+  btn.setAttribute('data-on',isOn?'1':'0');
+}
+function toggleSolo(songId,optKey){
+  var btn=document.getElementById('scb-'+songId+'-'+optKey);if(!btn)return;
+  var opt=SOLOS.filter(function(o){return o.key===optKey;})[0];if(!opt)return;
+  var nowOn=btn.getAttribute('data-on')==='1';
+  applyBtnState(btn,!nowOn,opt);
+  if(optKey==='other'){
+    var wrap=document.getElementById('other-wrap-'+songId);
+    if(wrap){wrap.classList.toggle('visible',!nowOn);if(!nowOn){var inp=document.getElementById('other-text-'+songId);if(inp)inp.focus();}}
+  }
+}
+function getSelectedSolos(songId){
+  return SOLOS.filter(function(opt){
+    var btn=document.getElementById('scb-'+songId+'-'+opt.key);
+    return btn&&btn.getAttribute('data-on')==='1';
+  }).map(function(o){return o.key;});
+}
+function soloBtnsHTML(songId,selectedSolos){
+  return SOLOS.map(function(opt){
+    var isOn=selectedSolos.indexOf(opt.key)>=0;
+    var style=isOn?'background:'+opt.on.bg+';color:'+opt.on.cl+';border-color:'+opt.on.bc+';':'';
+    return '<button type="button" class="scb" id="scb-'+songId+'-'+opt.key+'" data-on="'+(isOn?'1':'0')+'" style="'+style+'" onclick="toggleSolo('+songId+',\''+opt.key+'\')">'+opt.label+'</button>';
+  }).join('');
+}
+function toggleMemoField(songId,type){
+  var field=document.getElementById('memo-field-'+type+'-'+songId);
+  var btn=document.getElementById('memo-btn-'+type+'-'+songId);
+  if(!field||!btn)return;
+  var isOpen=field.classList.contains('visible');
+  field.classList.toggle('visible',!isOpen);
+  var clsMap={pa:'ap',light:'al',other:'ao'};
+  btn.classList.toggle(clsMap[type],!isOpen);
+}
+
+function render(){
+  var songSec=songs.filter(function(x){return x.type==='song';}).reduce(function(a,x){return a+x.duration;},0);
+  var mcSec=songs.filter(function(x){return x.type==='mc';}).reduce(function(a,x){return a+x.duration;},0);
+  var total=songSec+mcSec;
+  var count=songs.filter(function(x){return x.type==='song';}).length;
+  var mcCount=songs.filter(function(x){return x.type==='mc';}).length;
+  document.getElementById('total-display').textContent='合計: '+Math.floor(total/60)+'分'+String(total%60).padStart(2,'0')+'秒 | '+count+'曲';
+  document.getElementById('total-bar-time').textContent=Math.floor(total/60)+':'+String(total%60).padStart(2,'0');
+  document.getElementById('total-breakdown').innerHTML='<span>曲: '+fmtLong(songSec)+' ('+count+'曲)</span>'+(mcCount>0?'<span>MC/転換: '+fmtLong(mcSec)+' ('+mcCount+'回)</span>':'');
+  renderDiff();updateCountUI();updateMCHint();
+
+  var realNum=0;
+  document.getElementById('song-list').innerHTML=songs.map(function(s,i){
+    var isMC=s.type==='mc',isBlank=!isMC&&s.blank,isEditing=editingId===s.id,isSelected=i===selectedIdx;
+    if(!isMC)realNum++;
+    var solos=s.solos||[],soloOther=s.soloOther||'',pa=s.pa||'',light=s.light||'',memoOther=s.memoOther||'';
+    var hasOther=solos.indexOf('other')>=0;
+    var paOpen=isEditing&&!!pa,lightOpen=isEditing&&!!light,otherMemoOpen=isEditing&&!!memoOther;
+
+    var soloTagsHTML=solos.length>0?'<div class="solo-tags">'+solos.map(function(k){
+      var o=SOLOS.filter(function(x){return x.key===k;})[0];if(!o)return'';
+      var label=k==='other'?(soloOther||'Other'):o.label;
+      return '<span class="solo-tag '+o.tag+'">'+label+'</span>';
+    }).join('')+'</div>':'';
+    var memoTagsHTML=(pa||light||memoOther)?'<div class="memo-tags">'+(pa?'<span class="memo-tag mt-pa">PA</span>':'')+(light?'<span class="memo-tag mt-light">照明</span>':'')+(memoOther?'<span class="memo-tag mt-other">その他</span>':'')+'</div>':'';
+
+    var viewHTML='<div id="view-'+s.id+'" style="'+(isEditing?'display:none;':'')+'"><div class="view-top">'
+      +(isMC?'<span class="song-name-text">💬 MC / 転換</span>':isBlank?'<span class="song-name-empty">曲名未入力</span>':'<span class="song-name-text">'+s.name+'</span>')
+      +'<button type="button" class="inline-edit-btn" onclick="event.stopPropagation();startEdit('+s.id+')">✏ 編集</button>'
+      +(!isMC&&s.key?'<span class="badge">Key: '+s.key+'</span>':'')
+      +(!isMC&&s.bpm?'<span class="badge">'+s.bpm+' BPM</span>':'')
+      +'</div>'
+      +(!isMC?soloTagsHTML:'')
+      +(!isMC?memoTagsHTML:'')
+      +(isMC&&s.mcMemoMember?'<div style="font-size:12px;color:#0f6e56;margin-top:4px;">👥 '+s.mcMemoMember+'</div>':'')
+      +(isMC&&s.mcMemoStaff?'<div style="font-size:12px;color:#1a3a5c;margin-top:2px;">🎛 '+s.mcMemoStaff+'</div>':'')
+      +'</div>';
+
+    var editHTML='<div class="edit-mode" id="edit-'+s.id+'" style="'+(isEditing?'display:flex;':'')+'">'
+      +(!isMC?
+        '<div class="edit-row"><input type="text" id="ename-'+s.id+'" value="'+s.name+'" placeholder="曲名" /></div>'
+        +'<div class="edit-row">'+makeKeySelect(s.key,'ekey-'+s.id)
+        +'<input type="number" id="ebpm-'+s.id+'" value="'+(s.bpm||100)+'" placeholder="BPM" min="40" max="300" style="width:72px;border:1px solid #d0cfc8;border-radius:8px;padding:5px 8px;background:#fff;"/>'
+        +makeDurSelect(s.duration,'edur-'+s.id,600)+'</div>'
+        +'<hr class="hr-div"/>'
+        +'<div><div class="edit-section-label">ソロ担当</div>'
+        +'<div class="solo-checkboxes">'+soloBtnsHTML(s.id,solos)+'</div>'
+        +'<div class="other-input-wrap'+(hasOther?' visible':'')+'" id="other-wrap-'+s.id+'">'
+        +'<input type="text" id="other-text-'+s.id+'" value="'+soloOther+'" placeholder="楽器名（例：バイオリン）" style="margin-top:6px;"/></div></div>'
+        +'<hr class="hr-div"/>'
+        +'<div class="memo-section"><div class="edit-section-label">スタッフへの要望</div>'
+        +'<div class="memo-toggle-row">'
+        +'<button type="button" class="memo-toggle-btn'+(paOpen?' ap':'')+'" id="memo-btn-pa-'+s.id+'" onclick="toggleMemoField('+s.id+',\'pa\')">📢 PA</button>'
+        +'<button type="button" class="memo-toggle-btn'+(lightOpen?' al':'')+'" id="memo-btn-light-'+s.id+'" onclick="toggleMemoField('+s.id+',\'light\')">💡 照明</button>'
+        +'<button type="button" class="memo-toggle-btn'+(otherMemoOpen?' ao':'')+'" id="memo-btn-other-'+s.id+'" onclick="toggleMemoField('+s.id+',\'other\')">📝 その他</button>'
+        +'</div>'
+        +'<div class="memo-field'+(paOpen?' visible':'')+'" id="memo-field-pa-'+s.id+'"><div class="memo-field-label">📢 PAへの要望</div><textarea id="pa-text-'+s.id+'">'+pa+'</textarea></div>'
+        +'<div class="memo-field'+(lightOpen?' visible':'')+'" id="memo-field-light-'+s.id+'"><div class="memo-field-label">💡 照明への要望</div><textarea id="light-text-'+s.id+'">'+light+'</textarea></div>'
+        +'<div class="memo-field'+(otherMemoOpen?' visible':'')+'" id="memo-field-other-'+s.id+'"><div class="memo-field-label">📝 その他の要望</div><textarea id="other-memo-text-'+s.id+'">'+memoOther+'</textarea></div>'
+        +'</div>'
+      :
+        '<div class="edit-row"><span style="font-size:12px;color:#888;">転換時間:</span>'+makeDurSelect(s.duration,'edur-'+s.id,300)+'</div>'
+      +'<div style="display:flex;flex-direction:column;gap:8px;">'
+      +'<div style="display:flex;flex-direction:column;gap:4px;">'
+      +'<span style="font-size:11px;font-weight:500;color:#0f6e56;">👥 メンバー向けメモ</span>'
+      +'<textarea id="mc-memo-member-'+s.id+'" style="font-size:13px;width:100%;resize:vertical;min-height:56px;line-height:1.5;border:1px solid #5dcaa5;border-radius:8px;padding:6px 10px;background:#f0faf6;">'+( s.mcMemoMember||'')+'</textarea>'
+      +'</div>'
+      +'<div style="display:flex;flex-direction:column;gap:4px;">'
+      +'<span style="font-size:11px;font-weight:500;color:#1a3a5c;">🎛 スタッフ向けメモ</span>'
+      +'<textarea id="mc-memo-staff-'+s.id+'" style="font-size:13px;width:100%;resize:vertical;min-height:56px;line-height:1.5;border:1px solid #85b7eb;border-radius:8px;padding:6px 10px;background:#f0f6ff;">'+( s.mcMemoStaff||'')+'</textarea>'
+      +'</div>'
+      +'</div>'
+      )
+      +'<div class="edit-actions">'
+      +'<button type="button" class="save-btn" onclick="saveEdit('+s.id+')">✓ 保存</button>'
+      +'<button type="button" class="cancel-btn" onclick="cancelEdit()">キャンセル</button>'
+      +'</div></div>';
+
+    return '<div class="song-item'+(isMC?' mc-item':'')+(isBlank&&!isEditing?' placeholder':'')+(isSelected?' selected':'')+'" draggable="true"'
+      +' onclick="handleRowClick(event,'+i+')"'
+      +' ondragstart="dragStart('+i+')" ondragover="dragOver(event,'+i+')" ondrop="drop(event,'+i+')"'
+      +' ondragleave="dragLeave('+i+')" ondragend="dragEnd()">'
+      +'<span class="drag-handle" onclick="event.stopPropagation()">⠿</span>'
+      +'<span class="song-num">'+(isMC?'':realNum)+'</span>'
+      +'<div class="song-info">'+viewHTML+editHTML+'</div>'
+      +'<div class="right-col" onclick="event.stopPropagation()">'
+      +'<span class="song-duration">'+fmt(s.duration)+'</span>'
+      
+      +'<button type="button" class="delete-btn" onclick="deleteSong('+i+')">削除</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+function handleRowClick(e,idx){if(editingId!=null)return;selectRow(idx);renderSelectedState();}
+function startEdit(id){editingId=id;selectedIdx=null;render();var inp=document.getElementById('ename-'+id);if(inp){inp.focus();inp.select();}}
+function saveEdit(id){
+  var s=songs.filter(function(x){return x.id===id;})[0];if(!s)return;
+  if(s.type==='song'){
+    var n=document.getElementById('ename-'+id);if(n){var v=n.value.trim();s.name=v||s.name;s.blank=!v;}
+    var k=document.getElementById('ekey-'+id);if(k)s.key=k.value;
+    var b=document.getElementById('ebpm-'+id);if(b)s.bpm=parseInt(b.value)||null;
+    s.solos=getSelectedSolos(id);
+    var ot=document.getElementById('other-text-'+id);s.soloOther=ot?ot.value.trim():'';
+    var pt=document.getElementById('pa-text-'+id);s.pa=pt?pt.value.trim():'';
+    var lt=document.getElementById('light-text-'+id);s.light=lt?lt.value.trim():'';
+    var mo=document.getElementById('other-memo-text-'+id);s.memoOther=mo?mo.value.trim():'';
+  }
+  var d=document.getElementById('edur-'+id);if(d)s.duration=parseInt(d.value)||s.duration;
+  if(s.type==='mc'){
+    var mm=document.getElementById('mc-memo-member-'+id);if(mm)s.mcMemoMember=mm.value.trim();
+    var ms=document.getElementById('mc-memo-staff-'+id);if(ms)s.mcMemoStaff=ms.value.trim();
+  }
+  editingId=null;render();autosave();
+}
+function cancelEdit(){editingId=null;render();}
+function deleteSong(i){
+  if(songs[i].type==='song'&&songs.filter(function(x){return x.type==='song';}).length<=1)return;
+  songs.splice(i,1);
+  if(selectedIdx!=null){if(selectedIdx===i)selectedIdx=null;else if(selectedIdx>i)selectedIdx--;}
+  render();autosave();
+}
+function dragStart(i){dragSrc=i;setTimeout(function(){var el=document.querySelectorAll('.song-item')[i];if(el)el.classList.add('dragging');},0);}
+function dragOver(e,i){e.preventDefault();document.querySelectorAll('.song-item').forEach(function(el){el.classList.remove('drag-over');});var el=document.querySelectorAll('.song-item')[i];if(el)el.classList.add('drag-over');}
+function dragLeave(i){var el=document.querySelectorAll('.song-item')[i];if(el)el.classList.remove('drag-over');}
+function drop(e,i){
+  e.preventDefault();if(dragSrc===null||dragSrc===i)return;
+  var moved=songs.splice(dragSrc,1)[0];songs.splice(i,0,moved);
+  if(selectedIdx!=null){
+    if(selectedIdx===dragSrc)selectedIdx=i;
+    else if(selectedIdx>dragSrc&&selectedIdx<=i)selectedIdx--;
+    else if(selectedIdx<dragSrc&&selectedIdx>=i)selectedIdx++;
+  }
+  dragSrc=null;render();autosave();
+}
+function dragEnd(){document.querySelectorAll('.song-item').forEach(function(el){el.classList.remove('dragging','drag-over');});}
+
+function doPrint(){
+  var isMac=navigator.platform.toLowerCase().indexOf('mac')>=0;
+  var shortcut=isMac?'Cmd+P':'Ctrl+P';
+  var typeLabel=currentPdfType===1?'タイプ1（曲順 + ソロ担当）':'タイプ2（全詳細）';
+  document.getElementById('print-box-msg').textContent=typeLabel+' を印刷画面で開きます。\n\n① 印刷画面が開いたら\n② 送信先 / プリンタを「PDFに保存」に変更\n③「保存」をクリック\n\nショートカット: '+shortcut;
+  document.getElementById('print-overlay').classList.add('visible');
+}
+function closePrintOverlay(){document.getElementById('print-overlay').classList.remove('visible');}
+
+function execPrint(){
+  closePrintOverlay();
+  var type=currentPdfType;
+  var date=fmtDate(document.getElementById('live-date').value);
+  var venue=document.getElementById('live-venue').value.trim();
+  var artist=document.getElementById('live-artist').value.trim();
+  var titleParts=[artist,date,venue].filter(Boolean);
+  var title=titleParts.join(' / ')||'セットリスト';
+  var allotSec=getAllotSec();
+  var totalSec=songs.reduce(function(a,x){return a+x.duration;},0);
+
+  var rows='';var realNum=0;
+  songs.forEach(function(s){
+    var isMC=s.type==='mc';if(!isMC&&!s.blank)realNum++;
+    if(isMC){
+      var mcMemo=type===2?(s.mcMemoStaff||''):(s.mcMemoMember||'');
+    rows+='<tr style="background:#f5f5f5;"><td colspan="'+(type===2?6:5)+'" style="padding:6px 10px;color:#666;font-size:12px;">'
+      +'<span style="font-style:italic;">💬 MC / 転換</span>'
+      +(mcMemo?' &nbsp;—&nbsp; <span style="font-style:normal;color:#333;">'+mcMemo+'</span>':'')
+      +'</td></tr>';
+    } else {
+      var soloText=(s.solos||[]).map(function(k){
+        var o=SOLOS.filter(function(x){return x.key===k;})[0];
+        return k==='other'?(s.soloOther||'Other'):(o?o.label:'');
+      }).filter(Boolean).join(', ')||'—';
+      var memoItems=[];
+      if(s.pa)memoItems.push('<strong>PA:</strong> '+s.pa.replace(/\n/g,'<br>'));
+      if(s.light)memoItems.push('<strong>照明:</strong> '+s.light.replace(/\n/g,'<br>'));
+      if(s.memoOther)memoItems.push('<strong>その他:</strong> '+s.memoOther.replace(/\n/g,'<br>'));
+      rows+='<tr>'
+        +'<td style="padding:8px 10px;color:#aaa;text-align:right;width:28px;font-size:12px;">'+(s.blank?'':realNum)+'</td>'
+        +'<td style="padding:8px 10px;font-weight:500;font-size:14px;">'+(s.blank?'<span style="color:#aaa;font-style:italic;">未入力</span>':s.name)+'</td>'
+        +(type===1?'<td style="padding:8px 10px;"><span style="background:#e6f1fb;color:#185fa5;border:1px solid #85b7eb;border-radius:100px;padding:2px 8px;font-size:11px;font-weight:500;">'+(s.key||'—')+'</span></td>':'')
+        +'<td style="padding:8px 10px;"><span style="background:#faeeda;color:#854f0b;border:1px solid #ef9f27;border-radius:100px;padding:2px 8px;font-size:11px;font-weight:500;">'+(s.bpm?s.bpm+' BPM':'—')+'</span></td>'
+        +'<td style="padding:8px 10px;font-size:12px;color:#333;">'+soloText+'</td>'
+        +(type===2?'<td style="padding:8px 10px;font-size:12px;color:#888;font-variant-numeric:tabular-nums;">'+fmt(s.duration)+'</td>':'')+(type===2?'<td style="padding:8px 10px;font-size:12px;color:#555;">'+(memoItems.length?memoItems.join('<br>'):'')+' </td>':'')
+        +'</tr>';
+    }
+  });
+
+  var colHeaders=type===2
+    ?'<th>曲名</th><th style="width:85px;">BPM</th><th style="width:120px;">ソロ担当</th><th style="width:60px;">時間</th><th>要望</th>'
+    :'<th>曲名</th><th style="width:70px;">Key</th><th style="width:85px;">BPM</th><th>ソロ担当</th>';
+
+  var html='<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">'
+    +'<title>'+title+'</title>'
+    +'<style>body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;margin:0;padding:24px 32px;font-size:14px;color:#1a1a1a;}h1{font-size:18px;font-weight:700;margin-bottom:4px;}.sub{font-size:12px;color:#888;margin-bottom:16px;}table{width:100%;border-collapse:collapse;}th{background:#0f6e56;color:#fff;padding:8px 10px;text-align:left;font-size:12px;font-weight:500;}th:first-child{width:32px;}tr:nth-child(even){background:#f9f9f7;}tr{border-bottom:1px solid #e8e7e3;}@media print{body{padding:16px;}}</style>'
+    +'</head><body>'
+    +'<h1>🎸 '+title+'</h1>'
+    +'<div class="sub">'+(type===1?'Type 1: 曲順 + ソロ担当':'Type 2: 全詳細')+' ・ '
+    +songs.filter(function(x){return x.type==='song'&&!x.blank;}).length+'曲 ・ 合計: '+fmt(totalSec)
+    +(allotSec?' / 持ち時間: '+fmt(allotSec):'')+' ・ '+nowStr()+'</div>'
+    +'<table><thead><tr><th>#</th>'+colHeaders+'</tr></thead><tbody>'+rows+'</tbody></table>'
+    +(type===2&&members.length>0?
+      '<div style="margin-top:28px;">'
+      +'<div style="font-size:13px;font-weight:600;color:#0f6e56;border-bottom:2px solid #0f6e56;padding-bottom:4px;margin-bottom:10px;">メンバー</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:8px 20px;">'
+      +members.map(function(m){return '<span style="font-size:13px;color:#1a1a1a;">'+m.name+(m.role?' <span style="color:#888;font-size:12px;">('+m.role+')</span>':'')+'</span>';}).join('')
+      +'</div></div>'
+    :'')
+    +'<script>window.onload=function(){window.print();};<\/script>'
+    +'</body></html>';
+
+  var pw=window.open('','_blank','width=900,height=900');
+  if(pw){pw.document.write(html);pw.document.close();}
+  else alert('ポップアップがブロックされています。ブラウザの設定で許可してください。');
+
+  historyList.unshift({id:Date.now(),timestamp:nowStr(),title:title,songs:JSON.parse(JSON.stringify(songs)),allotMin:parseInt(document.getElementById('allot-min').value)||0,allotSec:parseInt(document.getElementById('allot-sec').value)||0});
+  renderHistoryTab();autosave();
+}
+
+function historyCardHTML(h,hi){
+  var total=h.songs.reduce(function(a,x){return a+x.duration;},0);
+  var count=h.songs.filter(function(x){return x.type==='song'&&!x.blank;}).length;
+  var rn=0;
+  var rows=h.songs.map(function(s){
+    var isMC=s.type==='mc';if(!isMC&&!s.blank)rn++;
+    return '<div class="history-song-row">'
+      +'<span class="history-song-num">'+(isMC?'':rn)+'</span>'
+      +(isMC?'<span class="history-song-mc">💬 MC</span>':'<span class="history-song-name">'+(s.blank?'（未入力）':s.name)+'</span>')
+      +(s.key?'<span class="badge" style="font-size:10px;">'+s.key+'</span>':'')
+      +'<span class="history-song-dur">'+fmt(s.duration)+'</span>'
+      +'</div>';
+  }).join('');
+  return '<div class="history-item">'
+    +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">'
+    +'<div><div style="font-size:14px;font-weight:600;">'+(h.title||'セットリスト')+'</div>'
+    +'<div style="font-size:12px;color:#aaa;margin-top:2px;">'+h.timestamp+' ・ '+count+'曲 ・ '+fmt(total)+'</div></div>'
+    +'<div style="display:flex;gap:5px;">'
+    +'<button type="button" class="history-restore-btn" onclick="restoreHistory('+hi+')">↩ 復元</button>'
+    +'<button type="button" class="history-del-btn" onclick="deleteHistory('+hi+')">✕</button>'
+    +'</div></div>'
+    +'<div style="display:flex;flex-direction:column;gap:2px;">'+rows+'</div>'
+    +'</div>';
+}
+function renderHistoryTab(){
+  var badge=document.getElementById('history-badge');
+  badge.textContent=historyList.length;
+  badge.style.display=historyList.length>0?'inline':'none';
+  var list=document.getElementById('history-list');
+  list.innerHTML=historyList.length
+    ?historyList.map(function(h,hi){return historyCardHTML(h,hi);}).join('')
+    :'<div class="history-empty">🕐 まだ履歴がありません<br><span style="font-size:12px;">印刷 / PDF保存すると自動で記録されます</span></div>';
+}
+function restoreHistory(hi){
+  if(!confirm('このセトリを復元しますか？'))return;
+  songs=JSON.parse(JSON.stringify(historyList[hi].songs));
+  document.getElementById('allot-min').value=historyList[hi].allotMin||45;
+  document.getElementById('allot-sec').value=historyList[hi].allotSec||0;
+  editingId=null;selectedIdx=null;render();switchTab('edit');
+}
+function deleteHistory(hi){
+  if(!confirm('この履歴を削除しますか？'))return;
+  historyList.splice(hi,1);renderHistoryTab();autosave();
+}
+
+function resetAll(){
+  if(!confirm('入力中のセトリをリセットしますか？\n※ 履歴はそのまま残ります。'))return;
+  // 曲リストを7曲の空白にリセット
+  nextId=1;
+  songs=[];
+  for(var i=0;i<7;i++)songs.push(makeBlank());
+  // ライブ情報リセット
+  document.getElementById('live-date').value='';
+  document.getElementById('live-venue').value='';
+  document.getElementById('live-artist').value='';
+  // 持ち時間リセット
+  document.getElementById('allot-min').value='45';
+  document.getElementById('allot-sec').value='0';
+  // 選択・編集状態リセット（履歴・メンバーはそのまま）
+  selectedIdx=null;
+  editingId=null;
+  // 表示更新
+  updateTitle();
+  renderDiff();
+  renderHistoryTab();
+  render();
+  switchTab('edit');
+}
+
+function switchTab(name){
+  ['edit','share','history'].forEach(function(t){
+    document.getElementById('tab-'+t).style.display=t===name?'block':'none';
+  });
+  document.querySelectorAll('.tabs .tab').forEach(function(btn,i){
+    btn.classList.toggle('active',['edit','share','history'][i]===name);
+  });
+  updateMCHint();
+  if(name==='history')renderHistoryTab();
+  if(name==='share')renderMembers();
+}
+
+loadSaved();
+if(songs.length)nextId=Math.max.apply(null,songs.map(function(s){return s.id;}))+1;
+render();renderHistoryTab();
+</script>
+</body>
+</html>
