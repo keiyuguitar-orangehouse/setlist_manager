@@ -172,10 +172,19 @@ button{cursor:pointer;border:none;background:none;}
 .print-go-btn{font-size:13px;padding:9px 20px;border-radius:8px;border:1px solid #0f6e56;background:#0f6e56;color:#fff;cursor:pointer;font-weight:500;}
 .print-go-btn:hover{background:#085041;}
 .print-cancel-btn{font-size:13px;padding:9px 20px;border-radius:8px;border:1px solid #d0cfc8;background:#fff;color:#555;cursor:pointer;}
+@media print{
+  #app-root{display:none !important;}
+  #ios-print-area{display:block !important;}
+}
+#ios-print-area{display:none;}
+@media screen and (max-width:540px){
+  .live-info-inner{grid-template-columns:1fr !important;}
+  .stage-time-row{flex-wrap:wrap;}
+}
 </style>
 </head>
 <body>
-<div class="app">
+<div class="app" id="app-root">
   <div class="tabs" style="justify-content:space-between;align-items:center;">
     <div style="display:flex;gap:4px;flex-wrap:wrap;">
       <button class="tab active" onclick="switchTab('edit')">📋 セトリ編集</button>
@@ -637,10 +646,16 @@ function drop(e,i){
 function dragEnd(){document.querySelectorAll('.song-item').forEach(function(el){el.classList.remove('dragging','drag-over');});}
 
 function doPrint(){
-  var isMac=navigator.platform.toLowerCase().indexOf('mac')>=0;
-  var shortcut=isMac?'Cmd+P':'Ctrl+P';
-  var typeLabel=currentPdfType===1?'タイプ1（曲順 + ソロ担当）':'タイプ2（全詳細）';
-  document.getElementById('print-box-msg').textContent=typeLabel+' を印刷画面で開きます。\n\n① 印刷画面が開いたら\n② 送信先 / プリンタを「PDFに保存」に変更\n③「保存」をクリック\n\nショートカット: '+shortcut;
+  var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  var typeLabel=currentPdfType===1?'👥 メンバー用':'🎛 スタッフ用';
+  var msg;
+  if(isIOS){
+    msg=typeLabel+' を印刷プレビューで開きます。\n\n【iPhoneでPDF保存する手順】\n① 「印刷画面を開く」をタップ\n② プレビュー画面で2本指でピンチアウト（広げる）\n③ PDF画面になったら左上の共有ボタン（□↑）をタップ\n④「ファイルに保存」または「本を追加」でPDF保存';
+  } else {
+    var isMac=navigator.platform.toLowerCase().indexOf('mac')>=0;
+    msg=typeLabel+' を印刷画面で開きます。\n\n① 印刷画面が開いたら\n② 送信先 / プリンタを「PDFに保存」に変更\n③「保存」をクリック\n\nショートカット: '+(isMac?'Cmd+P':'Ctrl+P');
+  }
+  document.getElementById('print-box-msg').textContent=msg;
   document.getElementById('print-overlay').classList.add('visible');
 }
 function closePrintOverlay(){document.getElementById('print-overlay').classList.remove('visible');}
@@ -708,9 +723,25 @@ function execPrint(){
     +'<script>window.onload=function(){window.print();};<\/script>'
     +'</body></html>';
 
-  var pw=window.open('','_blank','width=900,height=900');
-  if(pw){pw.document.write(html);pw.document.close();}
-  else alert('ポップアップがブロックされています。ブラウザの設定で許可してください。');
+  var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  if(isIOS){
+    // iPhoneは現在ページに印刷コンテンツを重ねてwindow.print()
+    var printDiv=document.getElementById('ios-print-area');
+    if(!printDiv){printDiv=document.createElement('div');printDiv.id='ios-print-area';document.body.appendChild(printDiv);}
+    printDiv.innerHTML=html;
+    printDiv.style.display='block';
+    document.getElementById('app-root').style.display='none';
+    window.onafterprint=function(){
+      printDiv.style.display='none';
+      document.getElementById('app-root').style.display='block';
+      window.onafterprint=null;
+    };
+    window.print();
+  } else {
+    var pw=window.open('','_blank','width=900,height=900');
+    if(pw){pw.document.write(html);pw.document.close();}
+    else alert('ポップアップがブロックされています。ブラウザの設定で許可してください。');
+  }
 
   historyList.unshift({id:Date.now(),timestamp:nowStr(),title:title,songs:JSON.parse(JSON.stringify(songs)),allotMin:parseInt(document.getElementById('allot-min').value)||0,allotSec:parseInt(document.getElementById('allot-sec').value)||0});
   renderHistoryTab();autosave();
