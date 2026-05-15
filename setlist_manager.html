@@ -824,8 +824,8 @@ function execPrint(){
     localStorage.setItem('sl_print_allot_sec', document.getElementById('allot-sec').value);
     localStorage.setItem('sl_print_members', JSON.stringify(members));
   }catch(e){}
-  // 印刷専用ページに遷移
-  window.location.href='setlist_print.html';
+  // 印刷専用ページに遷移（少し待って保存を確実に）
+  setTimeout(function(){window.location.href='setlist_print.html';},100);
   historyList.unshift({id:Date.now(),timestamp:nowStr(),title:([document.getElementById('live-artist').value.trim(),fmtDate(document.getElementById('live-date').value),document.getElementById('live-venue').value.trim()].filter(Boolean).join(' / ')||'セットリスト'),songs:JSON.parse(JSON.stringify(songs)),allotMin:parseInt(document.getElementById('allot-min').value)||0,allotSec:parseInt(document.getElementById('allot-sec').value)||0});
   renderHistoryTab();autosave();
 }
