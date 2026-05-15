@@ -445,8 +445,14 @@ function nowStr(){var d=new Date();return d.getFullYear()+'/'
   +String(d.getMinutes()).padStart(2,'0');}
 
 function load(){
+  // デバッグ: localStorage の内容確認
+  var rawSongs=localStorage.getItem('sl_print_songs');
+  if(!rawSongs){
+    document.getElementById('print-content').innerHTML='<div style="padding:40px;text-align:center;"><p style="color:#dc2626;font-size:15px;">⚠️ データが見つかりません</p><p style="color:#888;font-size:13px;margin-top:8px;">アプリに戻って再度「PDF保存/印刷」を押してください</p><br><button onclick="history.back()" style="padding:8px 20px;background:#0f6e56;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">← アプリに戻る</button></div>';
+    return;
+  }
   try{
-    var songs=JSON.parse(localStorage.getItem('sl_print_songs')||'[]');
+    var songs=JSON.parse(rawSongs||'[]');
     var type=parseInt(localStorage.getItem('sl_print_type')||'1');
     var date=fmtDate(localStorage.getItem('sl_print_date')||'');
     var venue=(localStorage.getItem('sl_print_venue')||'').trim();
@@ -515,7 +521,7 @@ function load(){
 
     document.title=title+' — セトリ';
   }catch(e){
-    document.getElementById('print-content').innerHTML='<div style="padding:40px;color:#dc2626;">データの読み込みに失敗しました。アプリに戻って再度お試しください。</div>';
+    document.getElementById('print-content').innerHTML='<div style="padding:40px;text-align:center;"><p style="color:#dc2626;font-size:15px;">⚠️ エラー: '+e.message+'</p><br><button onclick="history.back()" style="padding:8px 20px;background:#0f6e56;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">← アプリに戻る</button></div>';
   }
 }
 
@@ -523,9 +529,17 @@ load();
 
 function exportPDF(){
   try{
-    var jspdf=window.jspdf||window.jsPDF;
-    var JsPDF=jspdf?jspdf.jsPDF:null;
-    if(!JsPDF){alert('PDF生成ライブラリの読み込みに失敗しました');return;}
+    // jsPDF UMD形式: globalThis.jspdf.jsPDF
+    var JsPDF=null;
+    if(window.jspdf&&window.jspdf.jsPDF){
+      JsPDF=window.jspdf.jsPDF;
+    } else if(window.jsPDF){
+      JsPDF=window.jsPDF;
+    }
+    if(!JsPDF){
+      alert('PDF生成ライブラリが見つかりません。ページを再読み込みして試してください。');
+      return;
+    }
     
     var songs=JSON.parse(localStorage.getItem('sl_print_songs')||'[]');
     var type=parseInt(localStorage.getItem('sl_print_type')||'1');
