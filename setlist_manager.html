@@ -549,7 +549,7 @@ function render(){
 
     var editHTML='<div class="edit-mode" id="edit-'+s.id+'" style="'+(isEditing?'display:flex;':'')+'">'
       +(!isMC?
-        '<div class="edit-row"><input type="text" id="ename-'+s.id+'" value="'+s.name+'" placeholder="曲名" /></div>'
+        '<div class="edit-row"><input type="text" id="ename-'+s.id+'" value="'+s.name+'" placeholder="曲名" autocomplete="off" autocorrect="off" autocapitalize="none" /></div>'
         +'<div class="edit-row">'+makeKeySelect(s.key,'ekey-'+s.id)
         +'<input type="number" id="ebpm-'+s.id+'" value="'+(s.bpm||100)+'" placeholder="BPM" min="40" max="300" style="width:72px;border:1px solid #d0cfc8;border-radius:8px;padding:5px 8px;background:#fff;"/>'
         +makeDurSelect(s.duration,'edur-'+s.id,600)+'</div>'
@@ -646,17 +646,14 @@ function drop(e,i){
 function dragEnd(){document.querySelectorAll('.song-item').forEach(function(el){el.classList.remove('dragging','drag-over');});}
 
 function doPrint(){
-  var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
-  var typeLabel=currentPdfType===1?'👥 メンバー用':'🎛 スタッフ用';
-  var msg;
-  if(isIOS){
-    msg=typeLabel+' を印刷プレビューで開きます。\n\n【iPhoneでPDF保存する手順】\n① 「印刷画面を開く」をタップ\n② プレビュー画面で2本指でピンチアウト（広げる）\n③ PDF画面になったら左上の共有ボタン（□↑）をタップ\n④「ファイルに保存」または「本を追加」でPDF保存';
-  } else {
-    var isMac=navigator.platform.toLowerCase().indexOf('mac')>=0;
-    msg=typeLabel+' を印刷画面で開きます。\n\n① 印刷画面が開いたら\n② 送信先 / プリンタを「PDFに保存」に変更\n③「保存」をクリック\n\nショートカット: '+(isMac?'Cmd+P':'Ctrl+P');
-  }
-  document.getElementById('print-box-msg').textContent=msg;
-  document.getElementById('print-overlay').classList.add('visible');
+  execPrint();
+}
+
+function closePrintView(){
+  var printDiv=document.getElementById('ios-print-area');
+  if(printDiv){printDiv.style.display='none';printDiv.innerHTML='';}
+  var app=document.getElementById('app-root');
+  if(app)app.style.display='block';
 }
 function closePrintOverlay(){document.getElementById('print-overlay').classList.remove('visible');}
 
@@ -725,18 +722,22 @@ function execPrint(){
 
   var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
   if(isIOS){
-    // iPhoneは現在ページに印刷コンテンツを重ねてwindow.print()
+    // iPhoneはアプリを隠して印刷用HTMLを全画面表示
+    // Safariの共有ボタン→「PDFを作成」or「ファイルに保存」でPDF保存
     var printDiv=document.getElementById('ios-print-area');
-    if(!printDiv){printDiv=document.createElement('div');printDiv.id='ios-print-area';document.body.appendChild(printDiv);}
-    printDiv.innerHTML=html;
-    printDiv.style.display='block';
+    if(!printDiv){
+      printDiv=document.createElement('div');
+      printDiv.id='ios-print-area';
+      document.body.appendChild(printDiv);
+    }
+    // 「戻るボタン」を追加したHTMLを表示
+    var backBtn='<div style="position:fixed;top:0;left:0;right:0;background:#0f6e56;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;z-index:9999;font-family:-apple-system,sans-serif;">'
+      +'<button onclick="closePrintView()" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:14px;padding:6px 14px;border-radius:8px;cursor:pointer;font-family:-apple-system,sans-serif;">← 戻る</button>'
+      +'<span style="font-size:13px;">↑ 上の共有ボタン（□↑）→「PDFを作成」でPDF保存</span>'
+      +'</div>';
+    printDiv.innerHTML=backBtn+'<div style="padding-top:52px;">'+html+'</div>';
+    printDiv.style.cssText='display:block;position:fixed;inset:0;background:#fff;overflow-y:auto;z-index:9000;';
     document.getElementById('app-root').style.display='none';
-    window.onafterprint=function(){
-      printDiv.style.display='none';
-      document.getElementById('app-root').style.display='block';
-      window.onafterprint=null;
-    };
-    window.print();
   } else {
     var pw=window.open('','_blank','width=900,height=900');
     if(pw){pw.document.write(html);pw.document.close();}
