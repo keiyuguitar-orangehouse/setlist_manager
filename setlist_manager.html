@@ -22,7 +22,7 @@ button{cursor:pointer;border:none;background:none;}
 .live-info-inner{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
 .live-info-field{display:flex;flex-direction:column;gap:3px;}
 .live-info-label{font-size:11px;color:#888;}
-.live-info-field input{font-size:12px;padding:4px 8px;}
+.live-info-field input{font-size:12px;padding:4px 8px;max-width:100%;}
 
 .stage-time-bar{background:#fff;border:1px solid #e0dfd8;border-radius:12px;padding:10px 14px;margin-bottom:10px;}
 .stage-time-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
@@ -731,13 +731,24 @@ function execPrint(){
       document.body.appendChild(printDiv);
     }
     // 「戻るボタン」を追加したHTMLを表示
-    var backBtn='<div style="position:fixed;top:0;left:0;right:0;background:#0f6e56;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;z-index:9999;font-family:-apple-system,sans-serif;">'
-      +'<button onclick="closePrintView()" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:14px;padding:6px 14px;border-radius:8px;cursor:pointer;font-family:-apple-system,sans-serif;">← 戻る</button>'
-      +'<span style="font-size:13px;">↑ 上の共有ボタン（□↑）→「PDFを作成」でPDF保存</span>'
+    var backBtn='<div style="position:fixed;top:0;left:0;right:0;background:#0f6e56;color:#fff;padding:10px 14px;z-index:9999;font-family:-apple-system,sans-serif;">'
+      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">'
+      +'<button onclick="closePrintView()" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:14px;padding:6px 14px;border-radius:8px;cursor:pointer;font-family:-apple-system,sans-serif;flex-shrink:0;">← 戻る</button>'
+      +'<span style="font-size:12px;font-weight:600;">セトリの保存方法</span>'
+      +'</div>'
+      +'<div style="font-size:11px;line-height:1.7;opacity:.92;">'
+      +'① 画面を長押し → 「共有」→「PDFを作成」または「ファイルに保存」<br>'
+      +'② または スクリーンショット（電源＋音量ボタン同時押し）で保存<br>'
+      +'③ PCがある場合はPCで開いて印刷するのが最も確実です'
+      +'</div>'
       +'</div>';
     printDiv.innerHTML=backBtn+'<div style="padding-top:52px;">'+html+'</div>';
     printDiv.style.cssText='display:block;position:fixed;inset:0;background:#fff;overflow-y:auto;z-index:9000;';
     document.getElementById('app-root').style.display='none';
+    // 少し待ってからAirPrint印刷ダイアログを起動
+    setTimeout(function(){
+      window.print();
+    }, 800);
   } else {
     var pw=window.open('','_blank','width=900,height=900');
     if(pw){pw.document.write(html);pw.document.close();}
