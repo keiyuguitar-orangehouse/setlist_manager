@@ -646,15 +646,13 @@ function drop(e,i){
 function dragEnd(){document.querySelectorAll('.song-item').forEach(function(el){el.classList.remove('dragging','drag-over');});}
 
 function doPrint(){
-  // PCのみ: 新ウィンドウで印刷
-  if(true){
-    var pw=window.open('','_blank','width=900,height=900');
-    if(pw){pw.document.write(html);pw.document.close();}
-    else alert('ポップアップがブロックされています。ブラウザの設定で許可してください。');
+  var ua=navigator.userAgent;
+  var iosDevice=/iPad|iPhone|iPod/.test(ua)||(/Macintosh/.test(ua)&&'ontouchend' in document);
+  if(iosDevice){
+    showScreenshotView();
+  } else {
+    execPrint();
   }
-
-  historyList.unshift({id:Date.now(),timestamp:nowStr(),title:title,songs:JSON.parse(JSON.stringify(songs)),allotMin:parseInt(document.getElementById('allot-min').value)||0,allotSec:parseInt(document.getElementById('allot-sec').value)||0});
-  renderHistoryTab();autosave();
 }
 
 function historyCardHTML(h,hi){
@@ -782,19 +780,34 @@ function showScreenshotView(){
   var printDiv=document.getElementById('ios-print-area');
   if(!printDiv){printDiv=document.createElement('div');printDiv.id='ios-print-area';document.body.appendChild(printDiv);}
   var bar='<div style="position:fixed;top:0;left:0;right:0;background:#0f6e56;color:#fff;z-index:9999;padding:10px 14px;display:flex;align-items:center;gap:10px;font-family:-apple-system,sans-serif;">'
-    +'<button onclick="closePrintView()" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:13px;padding:5px 12px;border-radius:7px;cursor:pointer;white-space:nowrap;font-family:inherit;">← 戻る</button>'
+    +'<button onclick="closePrintView(); return false;" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:13px;padding:5px 12px;border-radius:7px;cursor:pointer;white-space:nowrap;font-family:inherit;">← 戻る</button>'
     +'<span style="font-size:12px;line-height:1.5;">📸 この画面をスクリーンショット<br><span style="font-size:11px;opacity:.85;">長い場合はスクロールして複数枚撮影</span></span>'
     +'</div>';
   printDiv.innerHTML=bar+'<div style="padding-top:58px;">'+content+'</div>';
-  printDiv.style.cssText='display:block;position:fixed;inset:0;background:#fff;overflow-y:auto;z-index:9000;-webkit-overflow-scrolling:touch;';
-  document.getElementById('app-root').style.display='none';
+  // 先にコンテンツをセットしてから表示切替
+  printDiv.style.cssText='display:block;position:fixed;top:0;left:0;right:0;bottom:0;background:#fff;overflow-y:auto;z-index:9000;-webkit-overflow-scrolling:touch;';
+  var appRoot=document.getElementById('app-root');
+  if(appRoot)appRoot.style.display='none';
+  // スクロール位置リセット
+  printDiv.scrollTop=0;
 }
 
 function closePrintView(){
   var printDiv=document.getElementById('ios-print-area');
-  if(printDiv){printDiv.style.display='none';printDiv.innerHTML='';}
+  if(printDiv){
+    printDiv.style.display='none';
+    printDiv.style.position='';
+    printDiv.innerHTML='';
+  }
   var app=document.getElementById('app-root');
-  if(app)app.style.display='block';
+  if(app){
+    app.style.display='block';
+    app.style.visibility='visible';
+    app.style.opacity='1';
+  }
+  // スクロール位置を先頭に戻す
+  window.scrollTo(0,0);
+  return false;
 }
 
 function execPrint(){
@@ -871,7 +884,8 @@ function switchTab(name){
 
 // iOSの場合ボタンテキストを変更
 (function(){
-  if(/iPad|iPhone|iPod/.test(navigator.userAgent)){
+  var _ua=navigator.userAgent;
+  if(/iPad|iPhone|iPod/.test(_ua)||(/Macintosh/.test(_ua)&&'ontouchend' in document)){
     var btn=document.getElementById('pdf-go-btn');
     if(btn)btn.innerHTML='📸 スクショ用に全画面表示';
   }
