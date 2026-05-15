@@ -813,88 +813,20 @@ function closePrintView(){
 
 function execPrint(){
   var type=currentPdfType;
-  var date=fmtDate(document.getElementById('live-date').value);
-  var venue=document.getElementById('live-venue').value.trim();
-  var artist=document.getElementById('live-artist').value.trim();
-  var titleParts=[artist,date,venue].filter(Boolean);
-  var title=titleParts.join(' / ')||'セットリスト';
-  var allotSec=getAllotSec();
-  var totalSec=songs.reduce(function(a,x){return a+x.duration;},0);
-
-  var rows='';var realNum=0;
-  songs.forEach(function(s){
-    var isMC=s.type==='mc';if(!isMC&&!s.blank)realNum++;
-    var mcMemo=type===2?(s.mcMemoStaff||''):(s.mcMemoMember||'');
-    if(isMC){
-      rows+='<tr style="background:#f5f5f5;"><td colspan="'+(type===2?6:5)+'" style="padding:8px 10px;color:#666;font-size:13px;font-style:italic;">💬 MC / 転換'+(mcMemo?' — <span style="font-style:normal;color:#333;">'+mcMemo+'</span>':'')+'</td></tr>';
-    } else {
-      var soloText=(s.solos||[]).map(function(k){var o=SOLOS.filter(function(x){return x.key===k;})[0];return k==='other'?(s.soloOther||'Other'):(o?o.label:'');}).filter(Boolean).join(', ')||'—';
-      var memoItems=[];
-      if(s.pa)memoItems.push('<b>PA:</b> '+s.pa.replace(/\n/g,'<br>'));
-      if(s.light)memoItems.push('<b>照明:</b> '+s.light.replace(/\n/g,'<br>'));
-      if(s.memoOther)memoItems.push('<b>他:</b> '+s.memoOther.replace(/\n/g,'<br>'));
-      rows+='<tr>'
-        +'<td style="padding:7px 8px;color:#aaa;text-align:right;font-size:12px;width:24px;">'+(s.blank?'':realNum)+'</td>'
-        +'<td style="padding:7px 8px;font-weight:500;font-size:14px;">'+(s.blank?'<span style="color:#aaa;font-style:italic;">未入力</span>':s.name)+'</td>'
-        +(type===1?'<td style="padding:7px 8px;"><span style="background:#e6f1fb;color:#185fa5;border:1px solid #85b7eb;border-radius:100px;padding:2px 7px;font-size:11px;font-weight:500;">'+(s.key||'—')+'</span></td>':'')
-        +'<td style="padding:7px 8px;"><span style="background:#faeeda;color:#854f0b;border:1px solid #ef9f27;border-radius:100px;padding:2px 7px;font-size:11px;font-weight:500;">'+(s.bpm?s.bpm+' BPM':'—')+'</span></td>'
-        +'<td style="padding:7px 8px;font-size:12px;color:#333;">'+soloText+'</td>'
-        +(type===2?'<td style="padding:7px 8px;font-size:12px;color:#666;font-variant-numeric:tabular-nums;">'+fmt(s.duration)+'</td>':'')
-        +(type===2?'<td style="padding:7px 8px;font-size:12px;color:#555;">'+(memoItems.join('<br>'))+'</td>':'')
-        +'</tr>';
-    }
-  });
-
-  var memberSection='';
-  if(type===2&&members.length>0){
-    memberSection='<div style="margin-top:24px;padding-top:12px;border-top:1px solid #ddd;">'
-      +'<div style="font-size:12px;font-weight:700;color:#0f6e56;margin-bottom:6px;">メンバー</div>'
-      +'<div style="display:flex;flex-wrap:wrap;gap:6px 16px;">'
-      +members.map(function(m){return '<span style="font-size:13px;">'+m.name+(m.role?' <span style="color:#888;font-size:12px;">('+m.role+')</span>':'')+'</span>';}).join('')
-      +'</div></div>';
-  }
-
-  var typeLabel=type===1?'Type 1: メンバー用':'Type 2: スタッフ用';
-  var colHeader=type===1
-    ?'<th>#</th><th>曲名</th><th style="width:65px;">Key</th><th style="width:80px;">BPM</th><th>ソロ担当</th>'
-    :'<th>#</th><th>曲名</th><th style="width:80px;">BPM</th><th>ソロ担当</th><th style="width:44px;">時間</th><th>要望</th>';
-
-  var printBody='<div style="padding:20px 24px;font-family:-apple-system,BlinkMacSystemFont,\'Hiragino Sans\',\'Noto Sans JP\',sans-serif;color:#1a1a1a;">'
-    +'<h1 style="font-size:18px;font-weight:700;margin:0 0 4px;">🎸 '+title+'</h1>'
-    +'<p style="font-size:11px;color:#888;margin:0 0 16px;">'+typeLabel+' ・ '
-    +songs.filter(function(x){return x.type==='song'&&!x.blank;}).length+'曲 ・ 合計 '+fmt(totalSec)
-    +(allotSec?' / 持ち時間 '+fmt(allotSec):'')+' ・ '+nowStr()+'</p>'
-    +'<table style="width:100%;border-collapse:collapse;">'
-    +'<thead><tr style="background:#0f6e56;color:#fff;"><th style="width:24px;padding:8px 8px;text-align:left;font-size:12px;">#</th>'
-    +(type===1
-      ?'<th style="padding:8px 8px;text-align:left;font-size:12px;">曲名</th><th style="width:65px;padding:8px 6px;text-align:left;font-size:12px;">Key</th><th style="width:80px;padding:8px 6px;text-align:left;font-size:12px;">BPM</th><th style="padding:8px 6px;text-align:left;font-size:12px;">ソロ担当</th>'
-      :'<th style="padding:8px 8px;text-align:left;font-size:12px;">曲名</th><th style="width:80px;padding:8px 6px;text-align:left;font-size:12px;">BPM</th><th style="padding:8px 6px;text-align:left;font-size:12px;">ソロ担当</th><th style="width:44px;padding:8px 6px;text-align:left;font-size:12px;">時間</th><th style="padding:8px 6px;text-align:left;font-size:12px;">要望</th>')
-    +'</tr></thead><tbody>'+rows+'</tbody></table>'
-    +memberSection+'</div>';
-
-  // 印刷用オーバーレイを表示してwindow.print()
-  var overlay=document.getElementById('print-overlay-area');
-  if(!overlay){
-    overlay=document.createElement('div');
-    overlay.id='print-overlay-area';
-    document.body.appendChild(overlay);
-  }
-  overlay.innerHTML='<style>'
-    +'@media print{#app-root,#screenshot-close-bar{display:none!important;}#print-overlay-area{display:block!important;}}'
-    +'#print-overlay-area{display:none;}'
-    +'</style>'
-    +'<div id="screenshot-close-bar" style="position:fixed;top:0;left:0;right:0;background:#0f6e56;color:#fff;padding:8px 14px;display:flex;align-items:center;gap:10px;z-index:9999;font-family:-apple-system,sans-serif;">'
-    +'<button onclick="closePrintOverlayArea()" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:13px;padding:5px 12px;border-radius:7px;cursor:pointer;font-family:inherit;flex-shrink:0;">← 戻る</button>'
-    +'<span style="font-size:12px;line-height:1.4;">共有ボタン（□↑）→「プリント」→ 2本指ピンチアウト → 共有→「PDFを作成」</span>'
-    +'</div>'
-    +'<div style="padding-top:50px;">'+printBody+'</div>';
-  overlay.style.cssText='display:block;position:fixed;inset:0;background:#fff;overflow-y:auto;z-index:9000;-webkit-overflow-scrolling:touch;';
-  document.getElementById('app-root').style.display='none';
-  overlay.scrollTop=0;
-  // iOSのAirPrint起動
-  setTimeout(function(){window.print();},600);
-
-  historyList.unshift({id:Date.now(),timestamp:nowStr(),title:title,songs:JSON.parse(JSON.stringify(songs)),allotMin:parseInt(document.getElementById('allot-min').value)||0,allotSec:parseInt(document.getElementById('allot-sec').value)||0});
+  // 印刷用データをlocalStorageに保存
+  try{
+    localStorage.setItem('sl_print_songs', JSON.stringify(songs));
+    localStorage.setItem('sl_print_type', String(type));
+    localStorage.setItem('sl_print_date', document.getElementById('live-date').value);
+    localStorage.setItem('sl_print_venue', document.getElementById('live-venue').value);
+    localStorage.setItem('sl_print_artist', document.getElementById('live-artist').value);
+    localStorage.setItem('sl_print_allot_min', document.getElementById('allot-min').value);
+    localStorage.setItem('sl_print_allot_sec', document.getElementById('allot-sec').value);
+    localStorage.setItem('sl_print_members', JSON.stringify(members));
+  }catch(e){}
+  // 印刷専用ページに遷移
+  window.location.href='setlist_print.html';
+  historyList.unshift({id:Date.now(),timestamp:nowStr(),title:([document.getElementById('live-artist').value.trim(),fmtDate(document.getElementById('live-date').value),document.getElementById('live-venue').value.trim()].filter(Boolean).join(' / ')||'セットリスト'),songs:JSON.parse(JSON.stringify(songs)),allotMin:parseInt(document.getElementById('allot-min').value)||0,allotSec:parseInt(document.getElementById('allot-sec').value)||0});
   renderHistoryTab();autosave();
 }
 
