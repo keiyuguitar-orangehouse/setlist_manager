@@ -264,7 +264,38 @@ function exportPDF(){
 
       var fn=(titleParts.join('_')||'setlist').replace(/[^\w\u3040-\u9FFF]/g,'_')
         +'_'+(type===1?'members':'staff')+'.pdf';
-      doc.save(fn);
+
+      var ua=navigator.userAgent;
+      var isIOS=/iPad|iPhone|iPod/.test(ua)||(/Macintosh/.test(ua)&&'ontouchend' in document);
+
+      if(isIOS){
+        // iOSは data URI で新しいタブに開く → Safariの共有から「ファイルに保存」
+        var pdfUri=doc.output('datauristring');
+        var newTab=window.open();
+        if(newTab){
+          newTab.document.write(
+            '<html><head><title>'+fn+'</title></head><body style="margin:0;background:#333;">'
+            +'<p style="color:#fff;font-family:sans-serif;padding:20px;font-size:14px;">'
+            +'📄 PDF が生成されました。<br><br>'
+            +'下の共有ボタン（□↑）→「ファイルに保存」でPDF保存できます。</p>'
+            +'<iframe src="'+pdfUri+'" style="width:100%;height:85vh;border:none;"></iframe>'
+            +'</body></html>'
+          );
+          newTab.document.close();
+        } else {
+          // ポップアップブロックされた場合は直接リンクを開く
+          var a=document.createElement('a');
+          a.href=pdfUri;
+          a.target='_blank';
+          a.download=fn;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      } else {
+        doc.save(fn);
+      }
+
       btn.textContent='✓ 完了！';
       setTimeout(function(){btn.textContent='📄 PDFに書き出し';btn.disabled=false;},2000);
 
