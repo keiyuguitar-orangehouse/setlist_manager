@@ -257,7 +257,7 @@ button{cursor:pointer;border:none;background:none;}
     </div>
 
     <div class="pdf-bar">
-      <div class="pdf-bar-title">📄 印刷 / PDF保存</div>
+      <div class="pdf-bar-title">📄 PDF表示</div>
       <div class="pdf-type-select">
         <button type="button" class="pdf-type-btn selected-type" id="pdf-type-btn-1" onclick="selectPdfType(1)">
           👥 メンバー用<br><span style="font-size:11px;font-weight:400;">曲順 + ソロ担当</span>
@@ -267,7 +267,7 @@ button{cursor:pointer;border:none;background:none;}
         </button>
       </div>
       <div class="pdf-type-desc" id="pdf-type-desc">曲番号・曲名・Key・BPM・ソロ担当を一覧表示します。シンプルなセトリ表として使えます。</div>
-      <button type="button" class="pdf-go-btn" id="pdf-go-btn" onclick="doPrint()">📄 この内容で印刷 / PDF保存</button>
+      <button type="button" class="pdf-go-btn" id="pdf-go-btn" onclick="doPrint()">📄 PDF表示</button>
       <div style="margin-top:8px;font-size:11px;color:#aaa;line-height:1.7;" id="save-status">
         💾 データは自動保存されます。次回開いたときも前回の続きから使えます。
       </div>
@@ -850,9 +850,9 @@ function switchTab(name){
   var btn=document.getElementById('pdf-go-btn');
   if(btn){
     if(iosDevice){
-      btn.innerHTML='📄 PDF保存 / 印刷';
+      btn.innerHTML='📄 PDF表示';
     } else {
-      btn.innerHTML='📄 この内容で印刷 / PDF保存';
+      btn.innerHTML='📄 PDF表示';
     }
   }
 })();

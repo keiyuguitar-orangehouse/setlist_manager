@@ -7,10 +7,6 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP',sans-serif;background:#f5f5f3;color:#1a1a1a;font-size:14px;}
-.bar{background:#0f6e56;color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.bar-btn{background:rgba(255,255,255,.2);border:none;color:#fff;font-size:13px;padding:6px 14px;border-radius:7px;cursor:pointer;font-family:inherit;white-space:nowrap;}
-.bar-btn.primary{background:#fff;color:#0f6e56;font-weight:700;}
-.bar-btn:hover{opacity:.85;}
 .content{max-width:760px;margin:0 auto;padding:20px 16px 40px;}
 .print-title{font-size:20px;font-weight:700;margin-bottom:4px;}
 .print-sub{font-size:12px;color:#888;margin-bottom:16px;}
@@ -33,18 +29,13 @@ tr:nth-child(even) td{background:#f9f9f7;}
 .error small{color:#888;font-size:13px;display:block;margin-bottom:20px;}
 .back-link{display:inline-block;padding:8px 20px;background:#0f6e56;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;}
 @media print{
-  .bar{display:none!important;}
-  .content{padding:12px;}
+    .content{padding:12px;}
 }
 </style>
 </head>
 <body>
 
-<div class="bar">
-  <button class="bar-btn" onclick="history.back()">← 戻る</button>
-  <button class="bar-btn primary" id="pdf-btn" onclick="exportPDF()">📄 PDFに書き出し</button>
-  <span style="font-size:11px;opacity:.8;">※ iPhoneは「PDFに書き出し」後、ファイルアプリに保存されます</span>
-</div>
+
 
 <div class="content">
   <div class="loading" id="loading">⏳ 読み込み中...</div>
@@ -156,140 +147,6 @@ function renderTable(){
     +memberHtml;
 }
 
-function exportPDF(){
-  var btn=document.getElementById('pdf-btn');
-  btn.textContent='⏳ 生成中...';
-  btn.disabled=true;
-
-  // setTimeoutを使わずすぐに実行（iOSポップアップ対策）
-  try{
-      var JsPDF=window.jspdf&&window.jspdf.jsPDF?window.jspdf.jsPDF:window.jsPDF;
-      if(!JsPDF){
-        btn.textContent='📄 PDFに書き出し';btn.disabled=false;
-        alert('PDF機能が読み込まれていません。ページを再読み込みしてください。');return;
-      }
-
-      var d=printData;
-      var type=d.type;
-      var titleParts=[d.artist,d.date,d.venue].filter(Boolean);
-      var title=titleParts.join(' / ')||'セットリスト';
-      var allotSec=d.allotMin*60+d.allotSec;
-      var totalSec=d.songs.reduce(function(a,x){return a+x.duration;},0);
-      var doc=new JsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-      var pw=210,mg=14,cw=pw-mg*2,y=mg;
-
-      // ヘッダー
-      doc.setFillColor(15,110,86);doc.rect(0,0,pw,14,'F');
-      doc.setTextColor(255,255,255);doc.setFontSize(11);doc.setFont('helvetica','bold');
-      doc.text(title,mg,9.5);
-      doc.setFontSize(8);doc.setFont('helvetica','normal');
-      doc.text(type===1?'Members':'Staff',pw-mg,9.5,{align:'right'});
-      y=20;
-
-      doc.setFontSize(8);doc.setTextColor(120,120,120);
-      var sc=d.songs.filter(function(x){return x.type==='song'&&!x.blank;}).length;
-      doc.text(sc+'曲 / 合計:'+fmt(totalSec)+(allotSec?' / 持ち時間:'+fmt(allotSec):''),mg,y);
-      y+=2;doc.setDrawColor(220,220,220);doc.line(mg,y,pw-mg,y);y+=5;
-
-      var rn=0;
-      d.songs.forEach(function(s){
-        if(y>272){doc.addPage();y=mg;}
-        var isMC=s.type==='mc';if(!isMC&&!s.blank)rn++;
-        var mcMemo=type===2?(s.mcMemoStaff||''):(s.mcMemoMember||'');
-
-        if(isMC){
-          doc.setFillColor(245,245,245);doc.rect(mg,y-3.5,cw,7,'F');
-          doc.setFontSize(8.5);doc.setFont('helvetica','italic');doc.setTextColor(140,140,140);
-          doc.text('MC / 転換'+(mcMemo?' - '+mcMemo:''),mg+2,y);
-          doc.setFont('helvetica','normal');y+=9;
-        } else {
-          doc.setFontSize(10);doc.setFont('helvetica','bold');
-          doc.setTextColor(s.blank?160:30,s.blank?160:30,s.blank?160:30);
-          if(!s.blank)doc.text(String(rn)+'.',mg,y);
-          doc.setFont('helvetica','normal');
-          var nm=s.blank?'(未入力)':s.name;
-          doc.text(nm,mg+7,y);
-          var bx=mg+7+doc.getTextWidth(nm)+3;
-          doc.setFontSize(7.5);
-          if(type===1&&s.key){
-            doc.setFillColor(230,241,251);doc.setTextColor(24,95,165);
-            var kw=doc.getTextWidth('Key:'+s.key)+4;
-            doc.roundedRect(bx,y-3.5,kw,5,1,1,'F');doc.text('Key:'+s.key,bx+2,y);bx+=kw+2;
-          }
-          if(s.bpm){
-            doc.setFillColor(250,238,218);doc.setTextColor(133,79,11);
-            var bw=doc.getTextWidth(s.bpm+'BPM')+4;
-            doc.roundedRect(bx,y-3.5,bw,5,1,1,'F');doc.text(s.bpm+'BPM',bx+2,y);
-          }
-          if(type===2){
-            doc.setTextColor(100,100,100);doc.setFontSize(8);
-            doc.text(fmt(s.duration),pw-mg,y,{align:'right'});
-          }
-          var soloText=(s.solos||[]).map(function(k){
-            var o=SOLOS.filter(function(x){return x.key===k;})[0];
-            return k==='other'?(s.soloOther||'Other'):(o?o.label:'');
-          }).filter(Boolean).join(', ');
-          if(soloText){y+=5;doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);doc.text('Solo: '+soloText,mg+7,y);}
-          if(type===2){
-            var ml=[];
-            if(s.pa)ml.push('PA: '+s.pa.replace(/\n/g,' '));
-            if(s.light)ml.push('照明: '+s.light.replace(/\n/g,' '));
-            if(s.memoOther)ml.push('他: '+s.memoOther.replace(/\n/g,' '));
-            if(ml.length){
-              y+=4;doc.setFontSize(7);doc.setTextColor(120,120,120);
-              ml.forEach(function(ml2){var w=doc.splitTextToSize(ml2,cw-10);doc.text(w,mg+7,y);y+=w.length*3.5;});
-              y-=2;
-            }
-          }
-          y+=2;doc.setDrawColor(235,235,235);doc.line(mg,y,pw-mg,y);y+=4;
-        }
-      });
-
-      if(type===2&&d.members.length>0){
-        if(y>255){doc.addPage();y=mg;}
-        y+=4;
-        doc.setFillColor(15,110,86);doc.rect(mg,y-4,cw,7,'F');
-        doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-        doc.text('Members',mg+2,y);y+=8;
-        doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(30,30,30);
-        var mline=d.members.map(function(m){return m.name+(m.role?' ('+m.role+')':'');}).join('  /  ');
-        var mw=doc.splitTextToSize(mline,cw);doc.text(mw,mg,y);
-      }
-
-      var tot=doc.getNumberOfPages();
-      for(var p=1;p<=tot;p++){
-        doc.setPage(p);doc.setFontSize(7);doc.setTextColor(180,180,180);
-        doc.text(title+' | '+p+'/'+tot,pw/2,292,{align:'center'});
-      }
-
-      var fn=(titleParts.join('_')||'setlist').replace(/[^\w\u3040-\u9FFF]/g,'_')
-        +'_'+(type===1?'members':'staff')+'.pdf';
-
-      var ua=navigator.userAgent;
-      var isIOS=/iPad|iPhone|iPod/.test(ua)||(/Macintosh/.test(ua)&&'ontouchend' in document);
-      console.log('User Agent:', ua);
-      console.log('isIOS:', isIOS);
-      console.log('PDF file name:', fn);
-
-      if(isIOS){
-        // iOSはBlobをURLに変換して現在のページで開く
-        var pdfBlob=doc.output('blob');
-        var pdfUrl=URL.createObjectURL(pdfBlob);
-        // 現在のページを差し替え（新タブを開かない＝ポップアップブロック回避）
-        window.location.href=pdfUrl;
-      } else {
-        // PC: 通常のダウンロード
-        doc.save(fn);
-      }
-
-      btn.textContent='✓ 完了！';
-      setTimeout(function(){btn.textContent='📄 PDFに書き出し';btn.disabled=false;},2000);
-
-  }catch(e){
-    btn.textContent='📄 PDFに書き出し';btn.disabled=false;
-    alert('PDF生成エラー: '+e.message);
-  }
-}
 
 // ページ読み込み完了後にデータ展開
 document.addEventListener('DOMContentLoaded',function(){load();});
