@@ -62,6 +62,14 @@ button{cursor:pointer;border:none;background:none;}
 .song-item.drag-over{border-color:#3b82f6;background:#eff6ff;}
 .song-item.placeholder{border-style:dashed;background:#f9f9f7;opacity:.6;}
 .drag-handle{color:#ccc;font-size:16px;cursor:grab;flex-shrink:0;padding-top:2px;user-select:none;}
+.move-btns{display:none;flex-direction:column;gap:2px;flex-shrink:0;margin-top:-2px;}
+.move-btn{background:#fff;border:1px solid #d0d0c8;border-radius:6px;width:28px;height:22px;font-size:10px;color:#666;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;line-height:1;}
+.move-btn:active{background:#e8f3ee;}
+.move-btn:disabled{opacity:.35;cursor:not-allowed;}
+@media(max-width:540px){
+  .drag-handle{display:none;}
+  .move-btns{display:flex;}
+}
 .song-num{font-size:12px;color:#aaa;min-width:18px;text-align:right;flex-shrink:0;padding-top:2px;}
 .song-info{flex:1;min-width:0;}
 .view-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -244,7 +252,7 @@ button{cursor:pointer;border:none;background:none;}
       <button type="button" class="mc-insert-btn" onclick="addMC()">💬 MCを挿入</button>
       <span class="mc-insert-hint" id="mc-hint">選択中の曲の下 / 未選択なら末尾</span>
     </div>
-    <div class="help-tip">✏ ボタンで編集　⠿ をドラッグで並び替え</div>
+    <div class="help-tip">✏ ボタンで編集　▲▼で並び替え（PCはドラッグ可）</div>
 
     <div class="song-list" id="song-list"></div>
 
@@ -591,6 +599,10 @@ function render(){
       +' ondragstart="dragStart('+i+')" ondragover="dragOver(event,'+i+')" ondrop="drop(event,'+i+')"'
       +' ondragleave="dragLeave('+i+')" ondragend="dragEnd()">'
       +'<span class="drag-handle" onclick="event.stopPropagation()">⠿</span>'
+      +'<div class="move-btns" onclick="event.stopPropagation()">'
+      +'<button type="button" class="move-btn" onclick="moveSong('+i+',-1)" '+(i===0?'disabled':'')+'>▲</button>'
+      +'<button type="button" class="move-btn" onclick="moveSong('+i+',1)" '+(i===songs.length-1?'disabled':'')+'>▼</button>'
+      +'</div>'
       +'<span class="song-num">'+(isMC?'':realNum)+'</span>'
       +'<div class="song-info">'+viewHTML+editHTML+'</div>'
       +'<div class="right-col" onclick="event.stopPropagation()">'
@@ -642,6 +654,19 @@ function drop(e,i){
   }
   dragSrc=null;render();autosave();
 }
+
+function moveSong(i,dir){
+  var newIdx=i+dir;
+  if(newIdx<0||newIdx>=songs.length)return;
+  var moved=songs.splice(i,1)[0];
+  songs.splice(newIdx,0,moved);
+  if(selectedIdx!=null){
+    if(selectedIdx===i)selectedIdx=newIdx;
+    else if(selectedIdx===newIdx)selectedIdx=i;
+  }
+  render();autosave();
+}
+
 function dragEnd(){document.querySelectorAll('.song-item').forEach(function(el){el.classList.remove('dragging','drag-over');});}
 
 function doPrint(){
